@@ -234,7 +234,7 @@ jobs:
       - name: Rename and checksum the distributables
         run: |
           mkdir -p dist
-          version="$(grep '^AETHER_VERSION_NAME=' "$GITHUB_ENV" | cut -d= -f2)"
+          version="${AETHER_VERSION_NAME:?version was not computed}"
           src=android/app/build/outputs/apk/release
           cp "$src/app-arm64-v8a-release.apk"   "dist/Aether-arm64-v8a-v$version.apk"
           cp "$src/app-universal-release.apk"   "dist/Aether-universal-v$version.apk"
@@ -256,6 +256,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           version="${GITHUB_REF#refs/tags/v}"
+          ls -la dist
+          test -f "dist/Aether-arm64-v8a-v$version.apk" || ls dist/
           gh release create "v$version" \
             --title "Aether for Android v$version" \
             --generate-notes \
