@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">اتر</string>
+
+    <!-- Tabs -->
+    <string name="tab_home">خانه</string>
+    <string name="tab_logs">گزارش</string>
+    <string name="tab_settings">تنظیمات</string>
+    <string name="tab_about">درباره</string>
+
+    <!-- Connection states -->
+    <string name="state_idle">قطع است</string>
+    <string name="state_preparing">آماده‌سازی هسته…</string>
+    <string name="state_scanning">در حال یافتن مسیر خروج…</string>
+    <string name="state_connecting">در حال برقراری تانل…</string>
+    <string name="state_connected">متصل است</string>
+    <string name="state_connected_tun">متصل · %1$s</string>
+    <string name="state_stopping">در حال قطع کردن…</string>
+    <string name="state_failed">ناموفق</string>
+
+    <!-- Home -->
+    <string name="home_connect">اتصال</string>
+    <string name="home_disconnect">قطع اتصال</string>
+    <string name="home_retry">تلاش دوباره</string>
+    <string name="home_socks_endpoint">نشانی پراکسی SOCKS5</string>
+    <string name="home_vpn_active">کل ترافیک دستگاه از تانل می‌گذرد</string>
+    <string name="home_vpn_inactive">فقط حالت پراکسی — اپ‌ها را به %1$s وصل کنید</string>
+    <string name="home_proxy_alive">پراکسی پاسخ می‌دهد</string>
+    <string name="home_proxy_wait">در انتظار پراکسی…</string>
+    <string name="home_throughput">↓ %1$s · ↑ %2$s</string>
+    <string name="home_protocol">پروتکل</string>
+    <string name="home_tun_healing">تانل در حال ترمیم خود است…</string>
+
+    <!-- Protocols -->
+    <string name="proto_masque">MASQUE</string>
+    <string name="proto_wireguard">وایرگارد</string>
+    <string name="proto_gool">gool</string>
+    <string name="proto_gool_classic">gool-classic</string>
+    <string name="proto_mim">mim</string>
+
+    <!-- Settings -->
+    <string name="settings_protocol">پروتکل</string>
+    <string name="settings_protocol_hint">ترافیک چطور به نقطه خروج منتقل شود.</string>
+    <string name="settings_scan">پروفایل اسکن</string>
+    <string name="settings_scan_hint">دقت و عمق جست‌وجوی دروازه‌ها.</string>
+    <string name="settings_noize">آشکارسازی مخفی‌سازی</string>
+    <string name="settings_noize_hint">پرکردن و شکل‌دهی بسته‌ها برای مقابله با DPI.</string>
+    <string name="settings_ip">نسخه IP</string>
+    <string name="settings_ip_hint">نسل IP برای اسکن و اتصال.</string>
+    <string name="settings_vpn">حالت TUN (VPN کل دستگاه)</string>
+    <string name="settings_vpn_hint">مسیر کردن کل ترافیک دستگاه از تانل. خاموش = فقط پراکسی SOCKS5.</string>
+    <string name="settings_advanced">پیشرفته</string>
+    <string name="settings_peer">دروازه ثابت</string>
+    <string name="settings_peer_hint">ip:port — وقتی تنظیم شود اسکن انجام نمی‌شود</string>
+    <string name="settings_exitloc">فیلتر کشور خروج</string>
+    <string name="settings_exitloc_hint">مثلاً !IR,AZ,RU یا DE,SE</string>
+    <string name="settings_tor">خروجی Tor</string>
+    <string name="settings_tor_hint">حمل خروجی Tor داخل تانل (--tor).</string>
+    <string name="settings_loglevel">سطح گزارش هسته</string>
+    <string name="settings_language">زبان / Language</string>
+    <string name="settings_language_system">سیستم</string>
+    <string name="settings_locked">برای تغییر این تنظیمات اول اتصال را قطع کنید.</string>
+    <string name="settings_apply_note">از اتصال بعدی اعمال می‌شود.</string>
+
+    <!-- Scan modes -->
+    <string name="scan_turbo">توربو</string>
+    <string name="scan_balanced">متعادل</string>
+    <string name="scan_thorough">کامل</string>
+    <string name="scan_verified">راستی‌آزمایی‌شده</string>
+    <string name="scan_ironclad">آهنین</string>
+
+    <!-- Logs -->
+    <string name="logs_title">گزارش هسته</string>
+    <string name="logs_clear">پاک کردن</string>
+    <string name="logs_copy">کپی</string>
+    <string name="logs_copied">گزارش کپی شد</string>
+    <string name="logs_empty">هنوز چیزی نیست — وصل شوید تا هسته را در کار ببینید.</string>
+
+    <!-- About -->
+    <string name="about_app">رابط اندروید جامعه‌محور برای هسته Aether.</string>
+    <string name="about_core">نسخه هسته</string>
+    <string name="about_app_version">نسخه اپ</string>
+    <string name="about_upstream">پروژه اصلی</string>
+    <string name="about_license">مجوز</string>
+    <string name="about_license_note">AGPL-3.0 — هسته، ترنسپورت‌ها و همین رابط، همگی نرم‌افزار آزادند و سورس کامل با بیلد عرضه می‌شود.</string>
+    <string name="about_transports">قدرت‌گرفته از هسته Aether (MASQUE، WireGuard، gool، mim)، hev-socks5-tunnel، lyrebird و psiphon-tunnel-core.</string>
+    <string name="about_warning">با مسئولیت و مطابق قوانین محل زندگی‌تان استفاده کنید.</string>
+
+    <!-- Notification -->
+    <string name="notif_channel">وضعیت اتر</string>
+    <string name="notif_starting">در حال یافتن مسیر…</string>
+    <string name="notif_connected_tun">متصل · %1$s</string>
+    <string name="notif_connected_socks">متصل · حالت پراکسی</string>
+    <string name="notif_stop">توقف</string>
+
+    <!-- Misc -->
+    <string name="error_vpn_denied">مجوز VPN سیستم داده نشد؛ به حالت پراکسی برمی‌گردیم.</string>
+</resources>

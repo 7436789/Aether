@@ -64,6 +64,22 @@ aether
 
 To update later, run `./aether.sh update`. To remove it, run `./aether.sh uninstall`.
 
+### Android app (GUI)
+
+A native Kotlin/Jetpack-Compose front end for the core lives in [`android/`](android/README.md) —
+one tap and the whole device routes through the tunnel (VpnService TUN + hev-socks5-tunnel),
+with MASQUE / WireGuard / gool / mim switching, the tor feature, live core logs, and a
+فارسی + English interface. CI builds two installable APKs on every change:
+
+| APK | For |
+| --- | --- |
+| `Aether-arm64-v8a-…apk` | 64-bit phones |
+| `Aether-universal-…apk` | every ABI in one package |
+
+Grab them from [Releases](https://github.com/CluvexStudio/Aether/releases) (this mirror builds
+them under [Actions](.github/workflows/android.yml)), or see the
+[Android guide](android/README.md) to build them yourself.
+
 ### OpenWrt
 
 Aether runs on OpenWrt as a single static binary of 7 to 10 MB. Choose the archive by the output of `uname -m`:

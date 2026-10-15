@@ -1,0 +1,264 @@
+name: android
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - '.github/workflows/android.yml'
+      - 'aether/src/**'
+      - 'aether/Cargo.toml'
+      - 'aether/Cargo.lock'
+      - 'quiche/**'
+      - 'pt-build.sh'
+      - 'psiphon-build.sh'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - '.github/workflows/android.yml'
+      - 'aether/src/**'
+      - 'aether/Cargo.toml'
+      - 'aether/Cargo.lock'
+      - 'quiche/**'
+      - 'pt-build.sh'
+      - 'psiphon-build.sh'
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # ------------------------------------------------------------------
+  # Native leg: the Rust core (libaether.so, built with the tor feature),
+  # hev-socks5-tunnel (tun2socks) and the Go pluggable transports,
+  # cross-compiled per ABI exactly the way the release pipeline does it.
+  # ------------------------------------------------------------------
+  core:
+    name: Native ${{ matrix.abi }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - abi: arm64-v8a
+            target: aarch64-linux-android
+            goarch: arm64
+            goarm: ''
+          - abi: armeabi-v7a
+            target: armv7-linux-androideabi
+            goarch: arm
+            goarm: '7'
+          - abi: x86_64
+            target: x86_64-linux-android
+            goarch: amd64
+            goarm: ''
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install CMake and Ninja
+        uses: lukka/get-cmake@latest
+
+      - name: Install Android NDK
+        id: ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r26d
+
+      - name: Install cargo-ndk
+        run: cargo install cargo-ndk --locked
+
+      - name: Cache cargo work
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: aether
+          prefix-key: aether-android-${{ matrix.abi }}
+
+      - name: Build pluggable transports (lyrebird + psiphon)
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+          ANDROID_NDK_ROOT: ${{ steps.ndk.outputs.ndk-path }}
+        run: |
+          bash pt-build.sh linux ${{ matrix.goarch }} "$RUNNER_TEMP/out-pt" "${{ matrix.goarm }}"
+          bash psiphon-build.sh linux ${{ matrix.goarch }} "$RUNNER_TEMP/out-pt" "${{ matrix.goarm }}"
+
+      - name: Build hev-socks5-tunnel (tun2socks)
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+          ANDROID_NDK_ROOT: ${{ steps.ndk.outputs.ndk-path }}
+        run: |
+          git clone --recursive --depth 1 https://github.com/heiher/hev-socks5-tunnel.git hev/jni
+          cd hev
+          "${ANDROID_NDK_HOME}/ndk-build" -j"$(nproc)" \
+            APP_ABI=${{ matrix.abi }} APP_PLATFORM=android-24 NDK_PROJECT_PATH=. \
+            APP_BUILD_SCRIPT=jni/Android.mk NDK_APPLICATION_MK=jni/Application.mk
+          test -f "libs/${{ matrix.abi }}/libhev-socks5-tunnel.so"
+
+      - name: Build the Rust core (libaether.so)
+        working-directory: aether
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+          ANDROID_NDK_ROOT: ${{ steps.ndk.outputs.ndk-path }}
+        run: |
+          under=$(echo "${{ matrix.target }}" | tr '-' '_')
+          export "BORING_BSSL_RUST_CPPLIB_${under}=static:-bundle=c++"
+          cargo ndk -t ${{ matrix.abi }} --platform 24 build --release --features tor --lib
+          bin="target/${{ matrix.target }}/release/libaether.so"
+          test -f "$bin"
+          needed=$(readelf -d "$bin" | sed -n 's/.*(NEEDED).*\[\(.*\)\]/\1/p')
+          echo "[android ${{ matrix.abi }}] libaether NEEDED: $needed"
+          if grep -qx 'libc++_shared.so' <<<"$needed"; then
+            echo "ERROR: libaether.so still needs libc++_shared.so (static libc++ link failed)"; exit 1
+          fi
+
+      - name: Stage jniLibs
+        run: |
+          out="stage/${{ matrix.abi }}"
+          mkdir -p "$out"
+          cp "aether/target/${{ matrix.target }}/release/libaether.so" "$out/"
+          cp "hev/libs/${{ matrix.abi }}/libhev-socks5-tunnel.so" "$out/"
+          # Go binaries ride as lib*.so so Android extracts them per ABI
+          # with the executable bit already set.
+          cp "$RUNNER_TEMP/out-pt/lyrebird" "$out/liblyrebird.so"
+          cp "$RUNNER_TEMP/out-pt/psiphon-tunnel-core" "$out/libpsiphon-tunnel-core.so"
+          ls -la "$out"
+
+      - name: Upload native bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.abi }}
+          path: stage/*
+          if-no-files-found: error
+
+  # ------------------------------------------------------------------
+  # APK leg: drops the native bundles into jniLibs and assembles the
+  # two distributable shapes:
+  #   * Aether-arm64-v8a  — 64-bit phones
+  #   * Aether-universal  — every ABI in one package
+  # ------------------------------------------------------------------
+  apk:
+    name: Assemble APKs
+    needs: core
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      AETHER_VERSION_CODE: ${{ github.run_number }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Download native bundles
+        uses: actions/download-artifact@v4
+        with:
+          path: bundles
+          pattern: native-*
+          merge-multiple: false
+
+      - name: Lay out jniLibs
+        run: |
+          mkdir -p android/app/src/main/jniLibs
+          for abi in arm64-v8a armeabi-v7a x86_64; do
+            mkdir -p "android/app/src/main/jniLibs/$abi"
+            cp -v "bundles/native-$abi/$abi/"* "android/app/src/main/jniLibs/$abi/"
+          done
+          find android/app/src/main/jniLibs -type f -printf '%p %s bytes\n' | sort
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Prepare signing keystore
+        env:
+          HAS_SECRET_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_B64 != '' }}
+        run: |
+          if [ "$HAS_SECRET_KEYSTORE" = "true" ]; then
+            echo "using the keystore from repository secrets"
+            base64 -d <<<"${{ secrets.ANDROID_KEYSTORE_B64 }}" > release.keystore
+            echo "AETHER_KEYSTORE_PATH=$PWD/release.keystore" >> "$GITHUB_ENV"
+            echo "AETHER_KEYSTORE_PASSWORD=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> "$GITHUB_ENV"
+            echo "AETHER_KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}" >> "$GITHUB_ENV"
+            echo "AETHER_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}" >> "$GITHUB_ENV"
+          else
+            echo "no secret keystore configured, minting a per-build one"
+            keytool -genkeypair -keystore "$PWD/release.keystore" \
+              -alias aether -keyalg RSA -keysize 4096 -validity 10000 \
+              -storepass aether-build -keypass aether-build \
+              -dname "CN=Aether Android CI, OU=Community, O=Aether, L=Internet, C=IR"
+            echo "AETHER_KEYSTORE_PATH=$PWD/release.keystore" >> "$GITHUB_ENV"
+            echo "AETHER_KEYSTORE_PASSWORD=aether-build" >> "$GITHUB_ENV"
+            echo "AETHER_KEY_ALIAS=aether" >> "$GITHUB_ENV"
+            echo "AETHER_KEY_PASSWORD=aether-build" >> "$GITHUB_ENV"
+          fi
+
+      - name: Compute version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            version="${GITHUB_REF#refs/tags/v}"
+          else
+            version="0.0.${GITHUB_RUN_NUMBER}-$(date -u +%Y%m%d)-${GITHUB_SHA::7}"
+          fi
+          echo "AETHER_VERSION_NAME=$version" >> "$GITHUB_ENV"
+          echo "version: $version"
+
+      - name: Assemble release APKs
+        working-directory: android
+        env:
+          AETHER_KEYSTORE_PATH: ${{ env.AETHER_KEYSTORE_PATH }}
+          AETHER_KEYSTORE_PASSWORD: ${{ env.AETHER_KEYSTORE_PASSWORD }}
+          AETHER_KEY_ALIAS: ${{ env.AETHER_KEY_ALIAS }}
+          AETHER_KEY_PASSWORD: ${{ env.AETHER_KEY_PASSWORD }}
+          AETHER_VERSION_NAME: ${{ env.AETHER_VERSION_NAME }}
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --stacktrace
+          ls -la app/build/outputs/apk/release/
+
+      - name: Rename and checksum the distributables
+        run: |
+          mkdir -p dist
+          version="$(grep '^AETHER_VERSION_NAME=' "$GITHUB_ENV" | cut -d= -f2)"
+          src=android/app/build/outputs/apk/release
+          cp "$src/app-arm64-v8a-release.apk"   "dist/Aether-arm64-v8a-v$version.apk"
+          cp "$src/app-universal-release.apk"   "dist/Aether-universal-v$version.apk"
+          cp "$src/app-armeabi-v7a-release.apk" "dist/Aether-armeabi-v7a-v$version.apk"
+          cp "$src/app-x86_64-release.apk"      "dist/Aether-x86_64-v$version.apk"
+          cd dist && sha256sum *.apk > SHA256SUMS.txt && cd ..
+          ls -la dist/
+
+      - name: Upload APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: aether-apks
+          path: dist/*
+          if-no-files-found: error
+
+      - name: Publish a GitHub release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF#refs/tags/v}"
+          gh release create "v$version" \
+            --title "Aether for Android v$version" \
+            --generate-notes \
+            dist/Aether-arm64-v8a-v$version.apk \
+            dist/Aether-universal-v$version.apk \
+            dist/SHA256SUMS.txt

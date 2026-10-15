@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Aether</string>
+
+    <!-- Tabs -->
+    <string name="tab_home">Home</string>
+    <string name="tab_logs">Logs</string>
+    <string name="tab_settings">Settings</string>
+    <string name="tab_about">About</string>
+
+    <!-- Connection states -->
+    <string name="state_idle">Disconnected</string>
+    <string name="state_preparing">Preparing the core…</string>
+    <string name="state_scanning">Scanning for a way out…</string>
+    <string name="state_connecting">Opening the tunnel…</string>
+    <string name="state_connected">Connected</string>
+    <string name="state_connected_tun">Connected · %1$s</string>
+    <string name="state_stopping">Stopping…</string>
+    <string name="state_failed">Failed</string>
+
+    <!-- Home -->
+    <string name="home_connect">Connect</string>
+    <string name="home_disconnect">Disconnect</string>
+    <string name="home_retry">Try again</string>
+    <string name="home_socks_endpoint">SOCKS5 endpoint</string>
+    <string name="home_vpn_active">Device traffic routed through the tunnel</string>
+    <string name="home_vpn_inactive">Proxy mode only — route your apps to %1$s</string>
+    <string name="home_proxy_alive">Proxy answering</string>
+    <string name="home_proxy_wait">Waiting for the proxy…</string>
+    <string name="home_throughput">↓ %1$s · ↑ %2$s</string>
+    <string name="home_protocol">Protocol</string>
+    <string name="home_tun_healing">The tunnel is healing itself…</string>
+
+    <!-- Protocols -->
+    <string name="proto_masque">MASQUE</string>
+    <string name="proto_wireguard">WireGuard</string>
+    <string name="proto_gool">gool</string>
+    <string name="proto_gool_classic">gool-classic</string>
+    <string name="proto_mim">mim</string>
+
+    <!-- Settings -->
+    <string name="settings_protocol">Protocol</string>
+    <string name="settings_protocol_hint">How traffic is carried to the exit.</string>
+    <string name="settings_scan">Scan profile</string>
+    <string name="settings_scan_hint">How thoroughly gateways are probed.</string>
+    <string name="settings_noize">Obfuscation</string>
+    <string name="settings_noize_hint">Padding and shaping against DPI.</string>
+    <string name="settings_ip">IP version</string>
+    <string name="settings_ip_hint">Family used for scanning and connecting.</string>
+    <string name="settings_vpn">TUN mode (device-wide VPN)</string>
+    <string name="settings_vpn_hint">Route all device traffic through the tunnel. Off = local SOCKS5 only.</string>
+    <string name="settings_advanced">Advanced</string>
+    <string name="settings_peer">Fixed gateway</string>
+    <string name="settings_peer_hint">ip:port — skip scanning when set</string>
+    <string name="settings_exitloc">Exit country filter</string>
+    <string name="settings_exitloc_hint">e.g. !IR,AZ,RU or DE,SE</string>
+    <string name="settings_tor">Tor exit</string>
+    <string name="settings_tor_hint">Carry a Tor exit inside the tunnel (--tor).</string>
+    <string name="settings_loglevel">Core log level</string>
+    <string name="settings_language">Language / زبان</string>
+    <string name="settings_language_system">System</string>
+    <string name="settings_locked">Disconnect first to change these.</string>
+    <string name="settings_apply_note">Takes effect on the next connection.</string>
+
+    <!-- Scan modes -->
+    <string name="scan_turbo">Turbo</string>
+    <string name="scan_balanced">Balanced</string>
+    <string name="scan_thorough">Thorough</string>
+    <string name="scan_verified">Verified</string>
+    <string name="scan_ironclad">Ironclad</string>
+
+    <!-- Logs -->
+    <string name="logs_title">Core log</string>
+    <string name="logs_clear">Clear</string>
+    <string name="logs_copy">Copy</string>
+    <string name="logs_copied">Log copied</string>
+    <string name="logs_empty">Nothing yet — connect to see the core at work.</string>
+
+    <!-- About -->
+    <string name="about_app">A community Android front end for the Aether core.</string>
+    <string name="about_core">Core version</string>
+    <string name="about_app_version">App version</string>
+    <string name="about_upstream">Upstream project</string>
+    <string name="about_license">License</string>
+    <string name="about_license_note">AGPL-3.0 — the core, the transports and this UI are free software. Source for everything ships with the build.</string>
+    <string name="about_transports">Powered by the Aether core (MASQUE, WireGuard, gool, mim), hev-socks5-tunnel, lyrebird and psiphon-tunnel-core.</string>
+    <string name="about_warning">Use responsibly and in accordance with the laws of your jurisdiction.</string>
+
+    <!-- Notification -->
+    <string name="notif_channel">Aether status</string>
+    <string name="notif_starting">Finding a way out…</string>
+    <string name="notif_connected_tun">Connected · %1$s</string>
+    <string name="notif_connected_socks">Connected · proxy mode</string>
+    <string name="notif_stop">Stop</string>
+
+    <!-- Misc -->
+    <string name="error_vpn_denied">The system VPN permission was denied; falling back to proxy mode.</string>
+</resources>
