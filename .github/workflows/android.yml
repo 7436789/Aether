@@ -3,26 +3,9 @@ name: android
 on:
   push:
     branches: [main]
-    paths:
-      - 'android/**'
-      - '.github/workflows/android.yml'
-      - 'aether/src/**'
-      - 'aether/Cargo.toml'
-      - 'aether/Cargo.lock'
-      - 'quiche/**'
-      - 'pt-build.sh'
-      - 'psiphon-build.sh'
+    tags: ['v*']
   pull_request:
     branches: [main]
-    paths:
-      - 'android/**'
-      - '.github/workflows/android.yml'
-      - 'aether/src/**'
-      - 'aether/Cargo.toml'
-      - 'aether/Cargo.lock'
-      - 'quiche/**'
-      - 'pt-build.sh'
-      - 'psiphon-build.sh'
   workflow_dispatch:
 
 env:
@@ -256,11 +239,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           version="${GITHUB_REF#refs/tags/v}"
-          ls -la dist
-          test -f "dist/Aether-arm64-v8a-v$version.apk" || ls dist/
+          # the core release pipeline may have created the release for this
+          # tag already; attach the APKs either way
           gh release create "v$version" \
             --title "Aether for Android v$version" \
             --generate-notes \
             dist/Aether-arm64-v8a-v$version.apk \
             dist/Aether-universal-v$version.apk \
-            dist/SHA256SUMS.txt
+            dist/SHA256SUMS.txt \
+          || gh release upload "v$version" \
+            dist/Aether-arm64-v8a-v$version.apk \
+            dist/Aether-universal-v$version.apk \
+            dist/SHA256SUMS.txt --clobber
