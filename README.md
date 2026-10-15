@@ -76,8 +76,9 @@ with MASQUE / WireGuard / gool / mim switching, the tor feature, live core logs,
 | `Aether-arm64-v8a-…apk` | 64-bit phones |
 | `Aether-universal-…apk` | every ABI in one package |
 
-Grab them from [Releases](https://github.com/CluvexStudio/Aether/releases) (this mirror builds
-them under [Actions](.github/workflows/android.yml)), or see the
+Grab them from the [Releases](https://github.com/7436789/Aether/releases/latest) of this mirror
+(built by [Actions](.github/workflows/android.yml) — `Aether-arm64-v8a-v1.0.0.apk` for 64-bit
+phones, `Aether-universal-v1.0.0.apk` everywhere else), or see the
 [Android guide](android/README.md) to build them yourself.
 
 ### OpenWrt
