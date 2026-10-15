@@ -28,6 +28,9 @@
     <string name="home_proxy_alive">Proxy answering</string>
     <string name="home_proxy_wait">Waiting for the proxy…</string>
     <string name="home_throughput">↓ %1$s · ↑ %2$s</string>
+    <string name="home_down">Download</string>
+    <string name="home_up">Upload</string>
+    <string name="home_sessions">TCP %1$d · UDP %2$d</string>
     <string name="home_protocol">Protocol</string>
     <string name="home_tun_healing">The tunnel is healing itself…</string>
 
@@ -80,6 +83,7 @@
     <string name="about_app">A community Android front end for the Aether core.</string>
     <string name="about_core">Core version</string>
     <string name="about_app_version">App version</string>
+    <string name="about_tun_engine">tun2socks engine</string>
     <string name="about_upstream">Upstream project</string>
     <string name="about_license">License</string>
     <string name="about_license_note">AGPL-3.0 — the core, the transports and this UI are free software. Source for everything ships with the build.</string>

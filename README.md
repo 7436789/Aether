@@ -1,281 +1,187 @@
-# Aether
+<p align="center">
+  <img src="docs/banner.png" alt="Aether for Android" width="880">
+</p>
 
-![Aether](Docs/Aether.png)
+<h1 align="center">Aether for Android</h1>
 
-### اینترنت آزاد برای همه:))
-**[راهنمای فارسی](README.fa.md)** · **[English Guide](Docs/DOCS.en.md)** · **[راهنمای کامل فارسی](Docs/DOCS.fa.md)**
+<p align="center">
+  <b>One tap — the whole device through the tunnel.</b><br>
+  A native Android front end for the <a href="https://github.com/CluvexStudio/Aether">Aether</a> censorship-circumvention core.<br>
+  <a href="#-%D9%81%D8%A7%D8%B1%D8%B3%DB%8C">فارسی</a> · English
+</p>
 
-Telegram: https://t.me/CluvexStudio
+<p align="center">
+  <a href="https://github.com/7436789/Aether/actions/workflows/android.yml"><img src="https://github.com/7436789/Aether/actions/workflows/android.yml/badge.svg" alt="Android build"></a>
+  <a href="https://github.com/7436789/Aether/releases/latest"><img src="https://img.shields.io/github/v/release/7436789/Aether?label=release&color=38BDF8" alt="release"></a>
+  <img src="https://img.shields.io/badge/ABI-arm64--v8a-38BDF8" alt="arm64-v8a">
+  <img src="https://img.shields.io/badge/minSdk-24%2B-38BDF8" alt="minSdk 24+">
+  <img src="https://img.shields.io/badge/license-AGPL--3.0-7FE7F4" alt="AGPL-3.0">
+</p>
 
-Aether is a censorship circumvention client designed for heavily restricted networks. It automatically discovers reachable routes, establishes an encrypted tunnel, and exposes a local SOCKS5 proxy for your applications.
+---
 
-Unlike traditional VPN clients, Aether is built for environments where Deep Packet Inspection (DPI), protocol fingerprinting, UDP throttling, and endpoint blocking are common.
+<p align="center">
+  <img src="docs/screens/home-fa.png" width="270" alt="Home (fa)">
+  <img src="docs/screens/settings-fa.png" width="270" alt="Settings (fa)">
+  <img src="docs/screens/logs-en.png" width="270" alt="Logs (en)">
+</p>
 
-## Features
+## Downloads
 
-- Automatic endpoint discovery, with end-to-end data-plane validation so a gateway is only trusted once it actually passes traffic, not just once it answers the handshake
-- MASQUE (HTTP/3 & HTTP/2), with optional TLS ClientHello fragmentation on HTTP/2
-- WireGuard support
-- WireGuard over MASQUE (`--gool`), a WireGuard tunnel inside a MASQUE one for a different exit address
-- Nested WireGuard mode (`--gool-classic`), with both hops discovered by the scan or given by hand
-- Nested MASQUE mode (`--mim`), a masque tunnel inside another one for a different exit address
-- Traffic obfuscation
-- Routing rules by domain, address, or port, matched from the TLS server name so they keep working behind a tun front end
-- Upstream proxy support, so Aether can dial out through another VPN or proxy already running on the machine
-- Optional Tor exit (`--tor`), with Tor carried inside the tunnel, so the exit address is a Tor exit
-- Automatic reconnection, and quick-reconnect to your last known-good gateway to skip rescanning
-- Local SOCKS5 proxy
-- Command-line flags, environment variables, or interactive prompts — your choice
-- Linux, Windows, macOS and Android (Termux)
+Grab the APK from the [latest release](https://github.com/7436789/Aether/releases/latest):
 
-## Download
-
-Prebuilt binaries are on the [Releases](https://github.com/CluvexStudio/Aether/releases/latest) page. Pick the archive that matches your system:
-
-| System | Archive |
+| Package | For |
 | --- | --- |
-| Windows x86_64 | `aether-windows-x86_64.zip` |
-| macOS on Apple Silicon (M1 and later) | `aether-macos-arm64.tar.gz` |
-| macOS on Intel | `aether-macos-x86_64.tar.gz` |
-| Linux x86_64 / arm64 / armv7 (glibc 2.34 or newer) | `aether-linux-x86_64.tar.gz`, `aether-linux-arm64.tar.gz`, `aether-linux-armv7.tar.gz` |
-| Linux with musl or an older glibc, fully static | `aether-linux-x86_64-musl.tar.gz`, `aether-linux-aarch64-musl.tar.gz`, `aether-linux-armv7-musl.tar.gz` |
-| OpenWrt routers | the `-musl` archive for the router's CPU, see [OpenWrt](#openwrt) |
-| Android (Termux) | the installer below |
+| `Aether-arm64-v8a-v…apk` | **64-bit phones** — almost every device since 2019 |
 
-Every archive has a matching `.sha256` file, and `SHA256SUMS.txt` lists them all. On a Mac, `uname -m` prints `arm64` or `x86_64`. The macOS binaries are not notarized, so clear the download quarantine once after extracting:
+Every release also ships a `SHA256SUMS.txt`. The APK is signed — when built without a
+configured signing secret, each build gets its own key, so remove the old app before
+installing an update built from a different run.
+
+## What this app does
+
+- **Real VPN mode.** A `VpnService` TUN front end ([zeptun](https://github.com/Noisemux/zeptun),
+  a tun2socks engine written in Zig) routes the whole device through the tunnel — apps, DNS,
+  everything — while the app's own sockets stay outside so the tunnel never loops back onto
+  itself. Every engine `.so` is 16 KB aligned, as Android 15+ requires.
+- **Proxy mode.** Prefer wiring things yourself? The core serves its SOCKS5 endpoint on
+  `127.0.0.1:1819` either way; the Home screen shows it live.
+- **All the transports.** MASQUE over HTTP/3 or HTTP/2, classic WireGuard, `gool`
+  (WireGuard-in-MASQUE), `gool-classic`, and `mim` — plus the scan profiles
+  (`turbo → ironclad`) and the `noize` obfuscation profiles the core supports.
+- **Tor & transports included.** Builds ship with the `tor` feature: lyrebird
+  (obfs4 / webtunnel / snowflake / meek) and psiphon ride along as bundled transports.
+- **Live speeds and sessions.** The Home screen shows download / upload rates, cumulative
+  volume and live TCP / UDP session counts, straight off the zeptun engine's counters.
+- **Bilingual UI.** فارسی (RTL) and English, switchable in-app.
+- **You can watch it think.** The core's native log stream is captured and shown in the
+  Logs tab — scans, handshakes, reconnects, stats — the same output the CLI prints.
+- **Auto-healing.** Reconnection and quick-reconnect to the last known-good gateway are
+  the core's own; the app reflects the healing instead of guessing.
+
+## How it works
+
+```
+┌──────────────────────────── your phone ────────────────────────────┐
+│                                                                    │
+│  apps ──► TUN (VpnService) ──► zeptun (Zig) ──────┐               │
+│                                                    │ 127.0.0.1:1819│
+│  your browser ──────────────────── SOCKS5 ─────────┘               │
+│                                                        │           │
+│              libaether.so (Rust core, in-process FFI) ◄─┘           │
+│              MASQUE · WireGuard · gool · mim · tor                  │
+│                        │ (excluded from the VPN)                   │
+└────────────────────────┼───────────────────────────────────────────┘
+                         ▼
+                     the open internet
+```
+
+The Rust core is loaded in-process through its stable JSON FFI (`aether_core_start` /
+`job_poll` / `job_cancel`) — no root, no Termux, no separate binaries to babysit except
+the two Go transports, which Android extracts per ABI and the app hands to the core by
+path. zeptun is statically linked into a single `libzeptun-jni.so` (~270 KB) that gets
+the descriptor straight from `VpnService.Builder`, so device routing is standard Android
+plumbing, not hacks.
+
+## Repository layout
+
+This repository **is the Android UI** — the app lives at the root:
+
+```
+app/                 the Kotlin + Jetpack Compose application
+aether/              the Rust core source (AGPL-3.0), built per release
+quiche/              the QUIC fork the core builds against
+pt-build.sh          builds lyrebird (Tor pluggable transports)
+psiphon-build.sh     builds psiphon-tunnel-core
+.github/workflows/android.yml   CI: native libs → signed arm64 APK → release
+```
+
+## Building
+
+CI does the heavy lifting: any push to `main` (or a `v*` tag) runs
+[`android.yml`](.github/workflows/android.yml), which cross-compiles the core with
+`cargo-ndk` + the Android NDK exactly the way upstream's release pipeline does, builds
+zeptun with Zig 0.16.0 and the Go transports, then assembles and signs the APK. A full
+run takes under ten minutes with the cargo cache warm.
+
+To do it by hand:
 
 ```bash
-tar -xzf aether-macos-x86_64.tar.gz
-xattr -d com.apple.quarantine aether
-./aether
-```
+git clone https://github.com/7436789/Aether.git
+cd Aether
 
-### Termux (Android) — one-line install
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/CluvexStudio/aether/main/aether.sh -o aether.sh && chmod +x aether.sh && ./aether.sh install
-```
-
-This detects your device architecture, downloads the matching release, verifies its checksum, and installs `aether` into `$PREFIX/bin`. Run it afterwards with:
-
-```bash
-aether
-```
-
-To update later, run `./aether.sh update`. To remove it, run `./aether.sh uninstall`.
-
-### Android app (GUI)
-
-A native Kotlin/Jetpack-Compose front end for the core lives in [`android/`](android/README.md) —
-one tap and the whole device routes through the tunnel (VpnService TUN + [zeptun](https://github.com/Noisemux/zeptun)),
-with MASQUE / WireGuard / gool / mim switching, the tor feature, live core logs, and a
-فارسی + English interface. CI builds two installable APKs on every change:
-
-| APK | For |
-| --- | --- |
-| `Aether-arm64-v8a-…apk` | 64-bit phones |
-| `Aether-universal-…apk` | every ABI in one package |
-
-Grab them from the [Releases](https://github.com/7436789/Aether/releases/latest) of this mirror
-(built by [Actions](.github/workflows/android.yml) — `Aether-arm64-v8a-v1.0.0.apk` for 64-bit
-phones, `Aether-universal-v1.0.0.apk` everywhere else), or see the
-[Android guide](android/README.md) to build them yourself.
-
-### OpenWrt
-
-Aether runs on OpenWrt as a single static binary of 7 to 10 MB. Choose the archive by the output of `uname -m`:
-
-| `uname -m` | Typical routers | Archive |
-| --- | --- | --- |
-| `aarch64` | MediaTek MT7981/MT7986 (e.g. Xiaomi AX3000T), Qualcomm IPQ807x, Raspberry Pi 4/5 | `aether-linux-aarch64-musl.tar.gz` |
-| `armv7l` | Qualcomm IPQ40xx (e.g. Google Wifi), MediaTek MT7623, other Cortex-A7/A9/A15 boards | `aether-linux-armv7-musl.tar.gz` |
-| `x86_64` | x86 mini PCs and VMs | `aether-linux-x86_64-musl.tar.gz` |
-
-MIPS routers (`mips`/`mipsel`, e.g. MT7621) are not supported.
-
-```sh
-cd /tmp
-A=aether-linux-aarch64-musl.tar.gz
-wget https://github.com/CluvexStudio/Aether/releases/latest/download/$A
-wget https://github.com/CluvexStudio/Aether/releases/latest/download/$A.sha256
-sha256sum -c $A.sha256 && tar -xzf $A && mv aether /usr/bin/aether
-mkdir -p /etc/aether
-aether --config /etc/aether/aether.toml
-```
-
-Keep `--config` on persistent storage such as `/etc/aether`: `/tmp` is wiped at every reboot, and a lost identity means a new device registration on each boot, which Cloudflare rate limits. To share the proxy with your LAN, bind it to the router's LAN address, for example `--bind 192.168.1.1:1819`; it has no authentication, so never expose it on the WAN. If `wget` reports an SSL error, run `opkg update && opkg install ca-bundle`, or copy the file over with `scp`.
-
-If the router also sends its own traffic into a tun front end (hev-socks5-tunnel, tun2socks), start Aether with `--mark 0xff` so every socket it opens to the internet carries that firewall mark, and let marked packets bypass the tun, for example with `ip rule add fwmark 0xff lookup main priority 100`. Setting a mark needs root.
-
-## Build
-
-### Requirements
-
-- Rust 1.98 or newer
-- C/C++ compiler
-- CMake
-
-The `quiche` repository must be placed alongside `aether`:
-
-```text
-<repo>/
-  aether/
-  quiche/
-```
-
-Build from the repository root; the Cargo manifest is `aether/Cargo.toml`, so enter that directory first:
-
-```bash
+# 1) native libs for arm64 (needs Rust ≥1.98, NDK r26d, Go 1.22, Zig 0.16.0, CMake)
+bash pt-build.sh linux arm64 "$PWD/out-pt"
+bash psiphon-build.sh linux arm64 "$PWD/out-pt"
 cd aether
-cargo build --release
+export BORING_BSSL_RUST_CPPLIB_aarch64_linux_android=static:-bundle=c++
+cargo ndk -t arm64-v8a --platform 24 build --release --features tor --lib
+cd ..
+git clone https://github.com/Noisemux/zeptun.git && cd zeptun
+ABIS="arm64-v8a" sh scripts/build_android.sh
+cd ..
+
+# 2) the app (needs JDK 17 + Android SDK)
+mkdir -p app/src/main/jniLibs/arm64-v8a
+cp aether/target/aarch64-linux-android/release/libaether.so app/src/main/jniLibs/arm64-v8a/
+cp zeptun/zig-out/android/jniLibs/arm64-v8a/libzeptun-jni.so app/src/main/jniLibs/arm64-v8a/
+cp out-pt/lyrebird app/src/main/jniLibs/arm64-v8a/liblyrebird.so
+cp out-pt/psiphon-tunnel-core app/src/main/jniLibs/arm64-v8a/libpsiphon-tunnel-core.so
+./gradlew assembleRelease
 ```
 
-Binary, relative to the repository root:
+## FAQ
 
-```text
-aether/target/release/aether
-```
+**Install blocked / "unknown apps"?** — Allow installs from your browser or file
+manager once; the APK isn't on Play Store.
 
-## Docker
+**Battery / always-on?** — The core is quiet when idle and the TUN worker is a single
+small native thread with a bounded packet pool; it's comparable to other local-VPN apps.
 
-You can run Aether in an isolated environment using Docker. The official image is available on GitHub Container Registry (GHCR).
+**Can I keep using my own proxy apps?** — Yes. Turn TUN mode off in Settings and dial
+`socks5://127.0.0.1:1819` from whatever you like.
 
-> **The SOCKS5 proxy has no authentication.** Anyone who can reach the port can use your tunnel. Every command below publishes the port to `127.0.0.1` only, so it stays reachable from your own machine and nothing else. Do not replace it with `-p 1819:1819`, because that form listens on every interface of the host and turns the proxy into an open relay. If you genuinely need to serve other machines, put an authenticated front end in front of it and firewall the port.
+**Reproducible signing?** — Set the `ANDROID_KEYSTORE_B64` / `ANDROID_KEYSTORE_PASSWORD` /
+`ANDROID_KEY_ALIAS` / `ANDROID_KEY_PASSWORD` repository secrets and every build signs
+with your key.
 
-The `-v aether-data:/data` volume keeps the generated WARP identity between runs. Without it every start registers a brand new device, and Cloudflare begins rate limiting your address.
+---
 
-Pull and run the pre-built image (interactive mode is required for initial setup):
+## 🇮🇷 فارسی
 
-```bash
-docker run -it -p 127.0.0.1:1819:1819 -v aether-data:/data ghcr.io/cluvexstudio/aether:latest
-```
+**اتر برای اندروید** — با یک لمس، تمام ترافیک دستگاه از تانل هسته‌ی
+[Aether](https://github.com/CluvexStudio/Aether) می‌گذرد: MASQUE روی HTTP/3 یا HTTP/2،
+وایرگارد، gool و mim، همراه با پروفایل‌های اسکن و مخفی‌سازی، و پشتیبانی Tor و
+psiphon به‌صورت توکار.
 
-You can also bypass prompts by providing environment variables:
+- **حالت VPN کامل:** رابط TUN با zeptun (موتور tun2socks به زبان Zig) کل دستگاه را
+  از تانل رد می‌کند؛ سوکت‌های خودِ اپ بیرون از VPN می‌مانند تا حلقه‌ی مسیریابی شکل
+  نگیرد.
+- **حالت پراکسی:** سوکت‌های خودتان را به `socks5://127.0.0.1:1819` وصل کنید.
+- **سرعت و نشست‌های زنده:** صفحه‌ی اصلی، سرعت دانلود/آپلود، حجم مصرفی و تعداد
+  نشست‌های فعال TCP/UDP را از شمارنده‌های خودِ موتور نشان می‌دهد.
+- **رابط فارسی و انگلیسی** با راست‌چین کامل.
+- **گزارش زنده‌ی هسته:** هرچه هسته، arti و ترنسپورت‌ها می‌نویسند، در تب «گزارش»
+  می‌بینید.
+- **ترمیم خودکار:** اتصال مجدد و اتصال سریع به آخرین دروازه‌ی سالم، کار خودِ هسته است.
 
-```bash
-docker run -it -p 127.0.0.1:1819:1819 -v aether-data:/data \
-  -e AETHER_PROTOCOL=masque \
-  -e AETHER_SCAN=balanced \
-  ghcr.io/cluvexstudio/aether:latest
-```
+دانلود از [انتشارها](https://github.com/7436789/Aether/releases/latest):
+نسخه‌ی `arm64-v8a` برای گوشی‌های ۶۴ بیتی.
+برای بیلد دستی هم `android.yml` دقیقاً همان مسیر آپ‌استریم (cargo-ndk + NDK r26d +
+zeptun با Zig و ترنسپورت‌های Go) را طی می‌کند.
 
-If you prefer to build the image manually from source:
+---
 
-```bash
-docker build -t aether .
-docker run -it -p 127.0.0.1:1819:1819 -v aether-data:/data aether
-```
+## Credits & license
 
-## Usage
+- The **[Aether core](https://github.com/CluvexStudio/Aether)** and its quiche fork, by
+  **CluvexStudio** — this project is a community front end and is **not** an official
+  CluvexStudio product. Aether's name and logo belong to their owners; the art in this
+  repository is original.
+- [zeptun](https://github.com/Noisemux/zeptun) by Noisemux (MIT) — TUN → SOCKS5,
+  with warm SOCKS5 pooling, full-cone UDP NAT and ICMP forwarding.
+- lyrebird (Tor pluggable transports) and psiphon-tunnel-core, built by the upstream
+  scripts.
 
-The examples below use the binary you built, run from inside `aether/`. With a release download, run `./aether` (or `aether.exe` on Windows) from the folder you extracted it to instead.
-
-Run with no arguments and answer the prompts:
-
-```bash
-./target/release/aether
-```
-
-Or skip the prompts with flags:
-
-```bash
-./target/release/aether --masque -4 --scan turbo --noize firewall
-```
-
-On Windows, double-click `run-aether.bat` (included in the release zip) instead — it opens a terminal, runs `aether.exe`, and keeps the window open afterwards so you can read any errors.
-
-Every prompt has a flag and an environment variable equivalent. Run `aether help` (or `--help`) for the full list — every flag, every variable, and what each one does — or see the guides linked below.
-
-After startup, a SOCKS5 proxy will be available at:
-
-```
-127.0.0.1:1819
-```
-
-Example:
-
-```bash
-curl -x socks5h://127.0.0.1:1819 https://www.cloudflare.com/cdn-cgi/trace
-```
-
-## Supported Protocols
-
-### MASQUE (Recommended)
-
-Encapsulates traffic over HTTP/3 (QUIC) or HTTP/2 (TLS), making it resemble ordinary HTTPS traffic.
-
-### WireGuard
-
-Fast and lightweight transport for networks with less aggressive inspection.
-
-### Nested MASQUE (`--mim`)
-
-A MASQUE tunnel carried inside another MASQUE tunnel. The inner hop is dialled from inside the outer one, so Cloudflare sees the outer edge instead of your address and hands the inner tunnel a different exit IP — the same idea as `gool`, with a MASQUE tunnel inside instead of a WireGuard one. Both hops use HTTP/3, or both use HTTP/2 with `--h2`.
-
-```bash
-./target/release/aether --mim
-```
-
-### WireGuard over MASQUE (`--gool`)
-
-A WireGuard tunnel carried inside a MASQUE tunnel. Your network sees only the MASQUE hop; the WireGuard hop is dialled from inside it, so Cloudflare sees the MASQUE edge instead of your address and hands the WireGuard tunnel a different exit IP. The MASQUE hop is found by the scan or named with `--peer`; the WireGuard hop is the endpoint its key names, on port 2408, unless `--gool-peer` names another.
-
-```bash
-./target/release/aether --gool
-```
-
-### Nested WireGuard (`--gool-classic`)
-
-The older gool: a WireGuard tunnel running inside another WireGuard tunnel, providing an additional encryption layer.
-
-Its two hops are found by the scan by default. If you already know addresses that work on your network, name them instead with `--wiw-outer 162.159.192.1:2408 --wiw-inner 188.114.96.1:2408`, or both at once with `--wiw-peers 162.159.192.1:2408,188.114.96.1:2408`. The port is required — which port gets through is what differs between networks, so none is assumed. Give only one and the scan finds the other.
-
-## Tor
-
-Built with the `tor` feature, Aether carries a Tor implementation (arti) and can combine it with the tunnel three ways:
-
-| Mode | Flag | Path | Exit address |
-| --- | --- | --- | --- |
-| Tor through the tunnel | `--tor` | you → WARP → Tor → internet | a Tor exit |
-| The tunnel through Tor | `--tor-reverse` | you → Tor → WARP → internet | a WARP exit |
-| Tor alone | `--tor-only` | you → Tor → internet | a Tor exit |
-
-```bash
-cd aether
-cargo build --release --features tor
-./target/release/aether --masque --tor
-```
-
-With `--tor` the usual proxy on `127.0.0.1:1819` keeps the WARP exit and a second one on `127.0.0.1:1820` comes out of Tor. Because Tor rides inside the tunnel, a network that blocks Tor never sees it. Any transport can carry it — `--masque` over HTTP/3 or HTTP/2, `--wg`, `--gool`, `--mim` — with nothing in between: `--wg --tor` has the WireGuard tunnel carry Tor directly. The other direction cannot do that, because Tor carries TCP only and WARP's WireGuard endpoints answer on UDP alone, so `--tor-reverse` runs MASQUE over HTTP/2 (for `--gool`, its MASQUE hop) and refuses `--wg` and `--gool-classic`. `--tor-reverse` and `--tor-only` reach Tor directly, and where Tor is blocked they fetch their own bridges from bridgedb and run them through the pluggable transports shipped in the `pt/` folder beside the binary, so there is nothing to install and nothing to paste in. See [Docs/DOCS.en.md](Docs/DOCS.en.md#tor).
-
-## Documentation
-
-Detailed documentation is available in:
-
-- [Docs/GUIDE.en.md](Docs/GUIDE.en.md) — English guide
-- [Docs/GUIDE.fa.md](Docs/GUIDE.fa.md) — راهنمای فارسی
-
-## Credits
-
-Developed by **CluvexStudio**. :))
-
-MASQUE support is built on top of Cloudflare's **Quiche** library.
-
-
-## Contributing
-
-> **Experienced network developers and protocol engineers are welcome to contribute.**
-
-> **Please keep the codebase clean, maintainable, and well-engineered. Low-quality or vibe-coded contributions will not be accepted.**
-
-## Donate
-
-If Aether has been useful to you, consider supporting its development:
-
-- **TRX (Tron):** `TRxVSHcoADZnBfztFmFb2TQopusAwWYEVR`
-- **BTC:** `bc1qnjnvzsa5avgj7n0uy383cv5zdxfjnvvp257egm`
-- **TON:** `UQAH75bXaaRUhZMwiF0ZujOXFDDmvLSPASKoOsWF0HNasiaM`
-
-## License
-
-See the LICENSE file for licensing information.
+Everything here — the core, the transports and this UI — is **AGPL-3.0** free software:
+the complete, buildable source ships with every distribution.

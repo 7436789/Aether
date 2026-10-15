@@ -28,6 +28,7 @@ import studio.cluvex.aether.core.AetherState
 import studio.cluvex.aether.data.SettingsStore
 import java.time.Duration
 import java.time.Instant
+import kotlin.math.max
 
 /**
  * Foreground service that owns the Aether core and, when the user asked
@@ -164,14 +165,36 @@ class AetherService : LifecycleService() {
 
             // -- tun throughput reporter ---------------------------------------
             loops += launch(Dispatchers.Default) {
+                var last: TunHolder.Snapshot? = null
+                var lastAt = 0L
                 while (isActive && controller != null) {
                     if (TunHolder.isRunning()) {
-                        val counters = TunHolder.throughput()
-                        if (counters != null) {
-                            // engine tx = written into the TUN = downloads,
-                            // engine rx = read out of the TUN = uploads
-                            AetherRuntime.reportThroughput(rx = counters.first, tx = counters.second)
+                        val snap = TunHolder.snapshot()
+                        if (snap != null) {
+                            val now = System.currentTimeMillis()
+                            var rateDown = 0L
+                            var rateUp = 0L
+                            val prev = last
+                            if (prev != null && now > lastAt) {
+                                val seconds = (now - lastAt) / 1000.0
+                                rateDown = max(0.0, (snap.down - prev.down) / seconds).toLong()
+                                rateUp = max(0.0, (snap.up - prev.up) / seconds).toLong()
+                            }
+                            last = snap
+                            lastAt = now
+                            // engine tx into the TUN = downloads,
+                            // engine rx out of the TUN = uploads
+                            AetherRuntime.reportStats(
+                                rx = snap.down,
+                                tx = snap.up,
+                                rateDown = rateDown,
+                                rateUp = rateUp,
+                                tcpActive = snap.tcp,
+                                udpActive = snap.udp,
+                            )
                         }
+                    } else {
+                        last = null
                     }
                     delay(2000)
                 }
@@ -281,14 +304,24 @@ class AetherService : LifecycleService() {
 /** Single tun worker; the zeptun engine is process-global anyway. */
 internal object TunHolder {
 
+    data class Snapshot(
+        val down: Long,
+        val up: Long,
+        val tcp: Long,
+        val udp: Long,
+    )
+
     /** The engine answers counters while it is up, -1 once it is gone. */
     fun isRunning(): Boolean =
         runCatching { Zeptun.nativeCounter(Zeptun.STAT_RX_PACKETS) >= 0L }.getOrDefault(false)
 
-    /** [downloads, uploads] in bytes, read from the live counter snapshot. */
-    fun throughput(): Pair<Long, Long>? {
+    /** Live byte and session counters; null while the engine is down. */
+    fun snapshot(): Snapshot? {
         val down = runCatching { Zeptun.nativeCounter(Zeptun.STAT_TX_BYTES) }.getOrDefault(-1L)
         val up = runCatching { Zeptun.nativeCounter(Zeptun.STAT_RX_BYTES) }.getOrDefault(-1L)
-        return if (down >= 0 && up >= 0) down to up else null
+        if (down < 0 || up < 0) return null
+        val tcp = runCatching { Zeptun.nativeCounter(Zeptun.STAT_TCP_ACTIVE) }.getOrDefault(0L)
+        val udp = runCatching { Zeptun.nativeCounter(Zeptun.STAT_UDP_ACTIVE) }.getOrDefault(0L)
+        return Snapshot(down, up, tcp, udp)
     }
 }

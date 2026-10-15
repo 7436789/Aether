@@ -32,3 +32,13 @@ routes-*.conf
 # Pluggable transport binaries put here by pt-build.sh. The release archives
 # carry their own, built for the target they ship to.
 pt/
+
+# Android app build artifacts
+.gradle/
+.kotlin/
+build/
+app/build/
+app/.cxx/
+local.properties
+app/src/main/jniLibs/
+*.keystore

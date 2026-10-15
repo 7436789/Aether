@@ -54,6 +54,10 @@ object AetherRuntime {
     data class Throughput(
         val rxBytes: Long = 0,
         val txBytes: Long = 0,
+        val rateDown: Long = 0,
+        val rateUp: Long = 0,
+        val tcpActive: Long = 0,
+        val udpActive: Long = 0,
     )
 
     fun setState(state: AetherState) {
@@ -79,8 +83,15 @@ object AetherRuntime {
         _log.value = (_log.value + lines).takeLast(LOG_LIMIT)
     }
 
-    fun reportThroughput(rx: Long, tx: Long) {
-        _throughput.value = Throughput(rx, tx)
+    fun reportStats(
+        rx: Long,
+        tx: Long,
+        rateDown: Long,
+        rateUp: Long,
+        tcpActive: Long,
+        udpActive: Long,
+    ) {
+        _throughput.value = Throughput(rx, tx, rateDown, rateUp, tcpActive, udpActive)
     }
 
     fun reset() {

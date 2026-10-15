@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import studio.cluvex.aether.R
 import studio.cluvex.aether.bridge.AetherCore
 import studio.cluvex.aether.ui.theme.EtherCyan
+import dev.zeptun.Zeptun
 
 @Composable
 fun AboutScreen(modifier: Modifier) {
@@ -68,6 +69,10 @@ fun AboutScreen(modifier: Modifier) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 AboutRow(stringResource(R.string.about_app_version), appVersion())
                 AboutRow(stringResource(R.string.about_core), AetherCore.coreVersion)
+                AboutRow(
+                    stringResource(R.string.about_tun_engine),
+                    runCatching { Zeptun.nativeVersion() }.getOrDefault("zeptun"),
+                )
                 AboutRow(stringResource(R.string.about_upstream), "CluvexStudio/Aether")
             }
         }

@@ -12,21 +12,17 @@ android {
         applicationId = "studio.cluvex.aether"
         minSdk = 24
         targetSdk = 35
-        versionCode = (System.getenv("AETHER_VERSION_CODE")?.toIntOrNull() ?: 1)
-        versionName = (System.getenv("AETHER_VERSION_NAME") ?: "1.0.0")
-    }
+        versionCode = (System.getenv("AETHER_VERSION_CODE")?.toIntOrNull() ?: 2)
+        versionName = (System.getenv("AETHER_VERSION_NAME") ?: "1.1.0")
 
-    // Two distributable APKs, exactly like the user asked:
-    //   * per-ABI build for 64-bit phones (arm64-v8a)
-    //   * universal build that carries every ABI
-    splits {
-        abi {
-            isEnable = true
-            reset()
-            include("arm64-v8a", "armeabi-v7a", "x86_64")
-            isUniversalApk = true
+        // One APK, one ABI: 64-bit phones.
+        ndk {
+            abiFilters += listOf("arm64-v8a")
         }
     }
+
+    // One distributable APK: arm64-v8a for 64-bit phones. The jniLibs
+    // staged by CI carry only that ABI, so no splits are needed.
 
     val keystorePath = System.getenv("AETHER_KEYSTORE_PATH")
     val keystorePassword = System.getenv("AETHER_KEYSTORE_PASSWORD")

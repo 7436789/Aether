@@ -28,6 +28,9 @@
     <string name="home_proxy_alive">پراکسی پاسخ می‌دهد</string>
     <string name="home_proxy_wait">در انتظار پراکسی…</string>
     <string name="home_throughput">↓ %1$s · ↑ %2$s</string>
+    <string name="home_down">دانلود</string>
+    <string name="home_up">آپلود</string>
+    <string name="home_sessions">TCP %1$d · UDP %2$d</string>
     <string name="home_protocol">پروتکل</string>
     <string name="home_tun_healing">تانل در حال ترمیم خود است…</string>
 
@@ -80,6 +83,7 @@
     <string name="about_app">رابط اندروید جامعه‌محور برای هسته Aether.</string>
     <string name="about_core">نسخه هسته</string>
     <string name="about_app_version">نسخه اپ</string>
+    <string name="about_tun_engine">موتور tun2socks</string>
     <string name="about_upstream">پروژه اصلی</string>
     <string name="about_license">مجوز</string>
     <string name="about_license_note">AGPL-3.0 — هسته، ترنسپورت‌ها و همین رابط، همگی نرم‌افزار آزادند و سورس کامل با بیلد عرضه می‌شود.</string>

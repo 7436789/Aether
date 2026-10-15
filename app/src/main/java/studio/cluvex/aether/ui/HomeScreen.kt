@@ -114,11 +114,25 @@ private fun StatusHeader(state: AetherState) {
         AetherState.Stopping -> stringResource(R.string.state_stopping) to WarmAmber
         is AetherState.Failed -> stringResource(R.string.state_failed) to SoftRed
     }
+    val breathing = state is AetherState.Starting || state is AetherState.Connected
+    val pulse = rememberInfiniteTransition(label = "statusDot")
+    val dotAlpha by pulse.animateFloat(
+        initialValue = 0.45f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 900, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "dotAlpha",
+    )
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
             Modifier
                 .size(10.dp)
-                .background(color, RoundedCornerShape(50)),
+                .background(
+                    color.copy(alpha = if (breathing) dotAlpha else 1f),
+                    RoundedCornerShape(50),
+                ),
         )
         Spacer(Modifier.size(8.dp))
         Text(
@@ -253,6 +267,9 @@ private fun StatusCard(
             Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
+            if (state is AetherState.Connected) {
+                SpeedBanner(throughput)
+            }
             InfoRow(
                 label = stringResource(R.string.home_socks_endpoint),
                 value = settings.socksAddress,
@@ -267,15 +284,13 @@ private fun StatusCard(
                         value = formatUptime(state.since),
                         highlight = state.vpnActive,
                     )
-                    InfoRow(
-                        label = stringResource(
+                    Text(
+                        text = stringResource(
                             if (state.socksAlive) R.string.home_proxy_alive else R.string.home_tun_healing,
                         ),
-                        value = stringResource(
-                            R.string.home_throughput,
-                            formatBytes(throughput.rxBytes),
-                            formatBytes(throughput.txBytes),
-                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (state.socksAlive) EtherCyan else WarmAmber,
+                        fontWeight = FontWeight.SemiBold,
                     )
                 }
                 is AetherState.Starting -> InfoRow(
@@ -285,6 +300,74 @@ private fun StatusCard(
                 else -> Unit
             }
         }
+    }
+}
+
+/**
+ * Live speeds straight off the zeptun counters, with the session count
+ * and cumulative volume in a quieter line underneath.
+ */
+@Composable
+private fun SpeedBanner(throughput: AetherRuntime.Throughput) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            SpeedColumn(
+                label = stringResource(R.string.home_down),
+                value = formatBytes(throughput.rateDown),
+                color = EtherCyan,
+            )
+            SpeedColumn(
+                label = stringResource(R.string.home_up),
+                value = formatBytes(throughput.rateUp),
+                color = EtherTeal,
+            )
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = stringResource(
+                    R.string.home_throughput,
+                    formatBytes(throughput.rxBytes),
+                    formatBytes(throughput.txBytes),
+                ),
+                style = MaterialTheme.typography.labelSmall,
+                fontFamily = FontFamily.Monospace,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Start,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = stringResource(R.string.home_sessions, throughput.tcpActive, throughput.udpActive),
+                style = MaterialTheme.typography.labelSmall,
+                fontFamily = FontFamily.Monospace,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.End,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SpeedColumn(label: String, value: String, color: Color) {
+    Column {
+        Text(
+            label,
+            style = MaterialTheme.typography.labelMedium,
+            color = color,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Text(
+            text = "$value/s",
+            style = MaterialTheme.typography.headlineSmall,
+            fontFamily = FontFamily.Monospace,
+            fontWeight = FontWeight.SemiBold,
+            color = color,
+        )
     }
 }
 
