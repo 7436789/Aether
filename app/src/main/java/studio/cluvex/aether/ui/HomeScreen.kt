@@ -20,11 +20,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,7 +35,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -49,16 +50,14 @@ import studio.cluvex.aether.core.AetherState
 import studio.cluvex.aether.data.AetherSettings
 import studio.cluvex.aether.data.Protocol
 import studio.cluvex.aether.data.SettingsStore
-import studio.cluvex.aether.ui.theme.EtherCyan
-import studio.cluvex.aether.ui.theme.EtherTeal
-import studio.cluvex.aether.ui.theme.SoftRed
-import studio.cluvex.aether.ui.theme.WarmAmber
 import java.time.Duration
 import java.time.Instant
 
 /**
- * The hero screen: a single, unmissable power control, live status, and a
- * one-tap protocol switch. Everything else lives behind the other tabs.
+ * The hero screen, Pixel style: a large top bar with the ether-ripple mark,
+ * one unmissable circular power control over a soft glow, a Material You
+ * status card and one-tap protocol chips. Everything else lives behind the
+ * other tabs.
  */
 @Composable
 fun HomeScreen(
@@ -78,16 +77,18 @@ fun HomeScreen(
             .padding(horizontal = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(12.dp))
+        BrandHeader()
+        Spacer(Modifier.height(14.dp))
         StatusHeader(state)
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(18.dp))
         PowerButton(
             state = state,
             busy = busy,
             onConnect = onConnect,
             onDisconnect = onDisconnect,
         )
-        Spacer(Modifier.height(28.dp))
+        Spacer(Modifier.height(24.dp))
 
         when (state) {
             is AetherState.Failed -> ErrorCard(state.error)
@@ -95,24 +96,59 @@ fun HomeScreen(
         }
 
         StatusCard(state, settings, throughput)
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(20.dp))
         ProtocolPicker(settings)
         Spacer(Modifier.height(24.dp))
     }
 }
 
+/** Large top app bar look: ripple mark + app name, the Pixel way. */
+@Composable
+private fun BrandHeader() {
+    val primary = MaterialTheme.colorScheme.primary
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Box(
+            Modifier
+                .size(44.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = CircleShape,
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Canvas(Modifier.size(26.dp)) {
+                val c = Offset(this.size.width / 2, this.size.height / 2)
+                drawCircle(color = primary, radius = 3.2f)
+                drawCircle(color = primary, radius = 7.4f, style = Stroke(width = 2.0f))
+                drawCircle(color = primary, radius = 11.4f, style = Stroke(width = 1.4f))
+            }
+        }
+        Text(
+            text = stringResource(R.string.app_name),
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+    }
+}
+
 @Composable
 private fun StatusHeader(state: AetherState) {
+    val scheme = MaterialTheme.colorScheme
     val (label, color) = when (state) {
-        is AetherState.Idle -> stringResource(R.string.state_idle) to MaterialTheme.colorScheme.onSurfaceVariant
+        is AetherState.Idle -> stringResource(R.string.state_idle) to scheme.onSurfaceVariant
         is AetherState.Starting -> when (state.phase) {
             AetherState.Starting.Phase.PREPARING -> stringResource(R.string.state_preparing)
             AetherState.Starting.Phase.SCANNING -> stringResource(R.string.state_scanning)
             AetherState.Starting.Phase.CONNECTING -> stringResource(R.string.state_connecting)
-        } to EtherTeal
-        is AetherState.Connected -> stringResource(R.string.state_connected) to EtherCyan
-        AetherState.Stopping -> stringResource(R.string.state_stopping) to WarmAmber
-        is AetherState.Failed -> stringResource(R.string.state_failed) to SoftRed
+        } to scheme.primary
+        is AetherState.Connected -> stringResource(R.string.state_connected) to scheme.tertiary
+        AetherState.Stopping -> stringResource(R.string.state_stopping) to scheme.onSurfaceVariant
+        is AetherState.Failed -> stringResource(R.string.state_failed) to scheme.error
     }
     val breathing = state is AetherState.Starting || state is AetherState.Connected
     val pulse = rememberInfiniteTransition(label = "statusDot")
@@ -130,7 +166,7 @@ private fun StatusHeader(state: AetherState) {
             Modifier
                 .size(10.dp)
                 .background(
-                    color.copy(alpha = if (breathing) dotAlpha else 1f),
+                    color = color.copy(alpha = if (breathing) dotAlpha else 1f),
                     RoundedCornerShape(50),
                 ),
         )
@@ -144,6 +180,10 @@ private fun StatusHeader(state: AetherState) {
     }
 }
 
+/**
+ * The Pixel-style power control: a wide ring plus a filled inner disc that
+ * lights up in Google blue while the tunnel is up, with a soft glow halo.
+ */
 @Composable
 private fun PowerButton(
     state: AetherState,
@@ -151,8 +191,10 @@ private fun PowerButton(
     onConnect: () -> Unit,
     onDisconnect: () -> Unit,
 ) {
+    val scheme = MaterialTheme.colorScheme
     val active = state is AetherState.Connected || busy
-    val idleRingColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+    val failed = state is AetherState.Failed
+    val idleRingColor = scheme.onSurfaceVariant.copy(alpha = 0.38f)
     val pulse = rememberInfiniteTransition(label = "pulse")
     val ringAlpha by pulse.animateFloat(
         initialValue = 0.35f,
@@ -163,52 +205,65 @@ private fun PowerButton(
         ),
         label = "ringAlpha",
     )
+    val accent = when {
+        state is AetherState.Connected -> scheme.tertiary
+        failed -> scheme.error
+        state is AetherState.Starting -> scheme.primary
+        else -> scheme.primary
+    }
 
     Box(
         modifier = Modifier
-            .size(190.dp)
+            .size(196.dp)
             .background(
-                brush = Brush.radialGradient(
+                brush = androidx.compose.ui.graphics.Brush.radialGradient(
                     colors = listOf(
-                        EtherTeal.copy(alpha = if (active) 0.30f else 0.12f),
+                        scheme.primary.copy(alpha = if (active) 0.16f else 0.07f),
                         Color.Transparent,
                     ),
                 ),
-                shape = RoundedCornerShape(50),
+                shape = CircleShape,
             )
             .clickable(enabled = !busy) {
                 if (state is AetherState.Connected) onDisconnect() else onConnect()
             },
         contentAlignment = Alignment.Center,
     ) {
-        Canvas(Modifier.size(190.dp)) {
-            val stroke = Stroke(width = 10f, cap = StrokeCap.Round)
+        Canvas(Modifier.size(196.dp)) {
+            val stroke = Stroke(width = 7f, cap = StrokeCap.Round)
             val center = Offset(this.size.width / 2, this.size.height / 2)
-            val radius = this.size.minDimension / 2 - 12f
+            val radius = this.size.minDimension / 2 - 9f
             val ringColor = when {
-                state is AetherState.Connected -> EtherCyan
-                state is AetherState.Failed -> SoftRed
-                busy -> EtherTeal.copy(alpha = ringAlpha)
+                state is AetherState.Connected -> accent
+                failed -> accent
+                busy -> accent.copy(alpha = ringAlpha)
                 else -> idleRingColor
             }
             drawCircle(color = ringColor, radius = radius, style = stroke)
+
+            val inner = radius * 0.76f
+            if (state is AetherState.Connected) {
+                // Filled Material You disc with the glyph knocked out of it.
+                drawCircle(color = accent, radius = inner, style = Stroke(width = inner * 2))
+            }
             // The power glyph: a stem plus an open arc.
-            val stem = Offset(center.x, center.y - radius * 0.62f)
+            val glyph = ringColor
+            val stem = Offset(center.x, center.y - inner * 0.62f)
             drawLine(
-                color = ringColor,
+                color = glyph,
                 start = stem,
                 end = Offset(center.x, center.y),
-                strokeWidth = 11f,
+                strokeWidth = 9f,
                 cap = StrokeCap.Round,
             )
             drawArc(
-                color = ringColor,
+                color = glyph,
                 startAngle = -60f,
                 sweepAngle = 300f,
                 useCenter = false,
-                topLeft = Offset(center.x - radius * 0.52f, center.y - radius * 0.52f),
-                size = androidx.compose.ui.geometry.Size(radius * 1.04f, radius * 1.04f),
-                style = Stroke(width = 11f, cap = StrokeCap.Round),
+                topLeft = Offset(center.x - inner * 0.52f, center.y - inner * 0.52f),
+                size = androidx.compose.ui.geometry.Size(inner * 1.04f, inner * 1.04f),
+                style = Stroke(width = 9f, cap = StrokeCap.Round),
             )
         }
         Text(
@@ -219,23 +274,25 @@ private fun PowerButton(
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 6.dp),
+                .padding(bottom = 2.dp),
         )
     }
 }
 
 @Composable
 private fun ErrorCard(error: String) {
+    val scheme = MaterialTheme.colorScheme
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.25f),
+            containerColor = scheme.errorContainer.copy(alpha = 0.55f),
         ),
+        shape = RoundedCornerShape(24.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(16.dp)) {
             Text(
                 stringResource(R.string.state_failed),
-                color = SoftRed,
+                color = scheme.error,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
             )
@@ -244,7 +301,7 @@ private fun ErrorCard(error: String) {
                 error,
                 style = MaterialTheme.typography.bodySmall,
                 fontFamily = FontFamily.Monospace,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = scheme.onErrorContainer,
             )
         }
     }
@@ -257,15 +314,17 @@ private fun StatusCard(
     settings: AetherSettings,
     throughput: AetherRuntime.Throughput,
 ) {
+    val scheme = MaterialTheme.colorScheme
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = scheme.surfaceContainerLow,
         ),
+        shape = RoundedCornerShape(24.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(
             Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (state is AetherState.Connected) {
                 SpeedBanner(throughput)
@@ -289,7 +348,7 @@ private fun StatusCard(
                             if (state.socksAlive) R.string.home_proxy_alive else R.string.home_tun_healing,
                         ),
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (state.socksAlive) EtherCyan else WarmAmber,
+                        color = if (state.socksAlive) scheme.tertiary else scheme.onSurfaceVariant,
                         fontWeight = FontWeight.SemiBold,
                     )
                 }
@@ -309,20 +368,21 @@ private fun StatusCard(
  */
 @Composable
 private fun SpeedBanner(throughput: AetherRuntime.Throughput) {
+    val scheme = MaterialTheme.colorScheme
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(36.dp),
         ) {
             SpeedColumn(
                 label = stringResource(R.string.home_down),
                 value = formatBytes(throughput.rateDown),
-                color = EtherCyan,
+                color = scheme.primary,
             )
             SpeedColumn(
                 label = stringResource(R.string.home_up),
                 value = formatBytes(throughput.rateUp),
-                color = EtherTeal,
+                color = scheme.secondary,
             )
         }
         Row(
@@ -378,7 +438,7 @@ private fun InfoRow(label: String, value: String, highlight: Boolean = false) {
             label,
             style = MaterialTheme.typography.bodySmall,
             color = if (highlight) {
-                EtherCyan
+                MaterialTheme.colorScheme.tertiary
             } else {
                 MaterialTheme.colorScheme.onSurfaceVariant
             },
@@ -395,16 +455,18 @@ private fun InfoRow(label: String, value: String, highlight: Boolean = false) {
     }
 }
 
+/** Material You filter chips with the selected check, like Pixel settings. */
 @Composable
 private fun ProtocolPicker(settings: AetherSettings) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val connected = AetherRuntime.state.collectAsState().value is AetherState.Connected
+    val scheme = MaterialTheme.colorScheme
 
     Column {
         Text(
             stringResource(R.string.home_protocol),
             style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = scheme.onSurfaceVariant,
             modifier = Modifier.padding(start = 4.dp, bottom = 8.dp),
         )
         Row(
@@ -419,6 +481,18 @@ private fun ProtocolPicker(settings: AetherSettings) {
                         if (!connected) {
                             SettingsStore.update(context) { it.copy(protocol = protocol) }
                         }
+                    },
+                    leadingIcon = if (settings.protocol == protocol) {
+                        {
+                            Icon(
+                                painter = androidx.compose.ui.res.painterResource(R.drawable.ic_check),
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = scheme.onPrimaryContainer,
+                            )
+                        }
+                    } else {
+                        null
                     },
                     label = {
                         Text(

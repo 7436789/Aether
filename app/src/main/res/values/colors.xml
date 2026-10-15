@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="window_bg">#0B1026</color>
-    <color name="icon_bg">#0B1026</color>
-    <color name="icon_wave">#7FE7F4</color>
+    <!-- Pixel-style Material You surfaces. -->
+    <color name="window_bg">#F0F3FA</color>
+    <color name="icon_bg">#0B57D0</color>
+
+    <!-- Home-screen widget (Glance). -->
+    <color name="widget_bg">#FFFFFF</color>
+    <color name="widget_title">#1A1C1E</color>
+    <color name="widget_on">#146C2E</color>
+    <color name="widget_dim">#44474E</color>
+    <color name="widget_btn_idle">#E9EBF3</color>
+    <color name="widget_btn_run">#0B57D0</color>
+    <color name="widget_ripple">#0B57D0</color>
+    <color name="widget_power_idle">#44474E</color>
 </resources>

@@ -10,6 +10,7 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import dev.zeptun.Zeptun
@@ -20,12 +21,16 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.sample
 import studio.cluvex.aether.MainActivity
 import studio.cluvex.aether.R
 import studio.cluvex.aether.core.AetherController
 import studio.cluvex.aether.core.AetherRuntime
 import studio.cluvex.aether.core.AetherState
 import studio.cluvex.aether.data.SettingsStore
+import studio.cluvex.aether.widget.pushWidgetUpdate
 import java.time.Duration
 import java.time.Instant
 import kotlin.math.max
@@ -45,7 +50,10 @@ class AetherService : LifecycleService() {
         const val ACTION_STOP = "studio.cluvex.aether.STOP"
 
         fun start(context: Context) {
-            context.startService(Intent(context, AetherService::class.java).apply { action = ACTION_START })
+            // Works from the activity, the widget and the quick-settings
+            // tile; the service promotes itself to foreground immediately.
+            val intent = Intent(context, AetherService::class.java).apply { action = ACTION_START }
+            ContextCompat.startForegroundService(context, intent)
         }
 
         fun stop(context: Context) {
@@ -55,6 +63,7 @@ class AetherService : LifecycleService() {
 
     private var controller: AetherController? = null
     private var loops: MutableList<Job> = mutableListOf()
+    private var widgetJob: Job? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -68,8 +77,10 @@ class AetherService : LifecycleService() {
                 shutdown()
             }
             else -> {
+                // Promote first: startForegroundService() callers expect it
+                // even when the core is already running.
+                startForegroundInternal()
                 if (controller == null) {
-                    startForegroundInternal()
                     startCore()
                 }
             }
@@ -82,7 +93,7 @@ class AetherService : LifecycleService() {
         val engine = AetherController(this)
         controller = engine
 
-        startForegroundInternal()
+        watchWidgets()
 
         lifecycleScope.launch(Dispatchers.Default) {
             try {
@@ -207,6 +218,8 @@ class AetherService : LifecycleService() {
         controller = null
         loops.forEach { it.cancel() }
         loops.clear()
+        widgetJob?.cancel()
+        widgetJob = null
         Thread {
             engine?.stop()
             stopTun()
@@ -214,9 +227,28 @@ class AetherService : LifecycleService() {
         lifecycleScope.launch {
             withContext(NonCancellable) {
                 delay(300)
+                pushWidgetUpdate(this@AetherService)
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
             }
+        }
+    }
+
+    // -- widget sync --------------------------------------------------------
+
+    /** Push state + speed changes into the home-screen widget. */
+    private fun watchWidgets() {
+        if (widgetJob?.isActive == true) {
+            return
+        }
+        widgetJob = lifecycleScope.launch {
+            combine(
+                AetherRuntime.state,
+                AetherRuntime.throughput,
+            ) { s, t -> s to t }
+                .conflate()
+                .sample(2000)
+                .collect { pushWidgetUpdate(this@AetherService) }
         }
     }
 

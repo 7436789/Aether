@@ -97,6 +97,12 @@
     <string name="notif_connected_socks">Connected · proxy mode</string>
     <string name="notif_stop">Stop</string>
 
+    <!-- Widget + quick-settings tile -->
+    <string name="widget_description">Toggle Aether on or off from your home screen</string>
+    <string name="widget_tap_connect">Tap to connect</string>
+    <string name="widget_tap_disconnect">Tap to disconnect</string>
+    <string name="tile_label">Aether</string>
+
     <!-- Misc -->
     <string name="error_vpn_denied">The system VPN permission was denied; falling back to proxy mode.</string>
 </resources>

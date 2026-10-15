@@ -24,7 +24,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import studio.cluvex.aether.R
 import studio.cluvex.aether.bridge.AetherCore
-import studio.cluvex.aether.ui.theme.EtherCyan
 import dev.zeptun.Zeptun
 
 @Composable
@@ -54,7 +53,7 @@ fun AboutScreen(modifier: Modifier) {
             stringResource(R.string.app_name),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
-            color = EtherCyan,
+            color = MaterialTheme.colorScheme.primary,
         )
         Text(
             stringResource(R.string.about_app),

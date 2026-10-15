@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="window_bg">#12141B</color>
+    <color name="widget_bg">#1D2025</color>
+    <color name="widget_title">#E2E2E9</color>
+    <color name="widget_on">#6DD58C</color>
+    <color name="widget_dim">#C3C6CF</color>
+    <color name="widget_btn_idle">#2A2D34</color>
+    <color name="widget_btn_run">#A8C7FA</color>
+    <color name="widget_ripple">#A8C7FA</color>
+    <color name="widget_power_idle">#C3C6CF</color>
+</resources>

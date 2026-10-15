@@ -97,6 +97,12 @@
     <string name="notif_connected_socks">متصل · حالت پراکسی</string>
     <string name="notif_stop">توقف</string>
 
+    <!-- Widget + quick-settings tile -->
+    <string name="widget_description">خاموش/روشن‌کردن سریع اتر از صفحه خانه</string>
+    <string name="widget_tap_connect">برای اتصال بزنید</string>
+    <string name="widget_tap_disconnect">برای قطع اتصال بزنید</string>
+    <string name="tile_label">اتر</string>
+
     <!-- Misc -->
     <string name="error_vpn_denied">مجوز VPN سیستم داده نشد؛ به حالت پراکسی برمی‌گردیم.</string>
 </resources>

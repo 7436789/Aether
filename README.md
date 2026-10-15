@@ -22,6 +22,10 @@
 
 <p align="center">
   <img src="docs/screens/home-fa.png" width="270" alt="Home (fa)">
+  <img src="docs/screens/widget-tile-fa.png" width="552" alt="Home-screen widget + quick-settings tile (fa)">
+</p>
+
+<p align="center">
   <img src="docs/screens/settings-fa.png" width="270" alt="Settings (fa)">
   <img src="docs/screens/logs-en.png" width="270" alt="Logs (en)">
 </p>
@@ -53,6 +57,12 @@ installing an update built from a different run.
   (obfs4 / webtunnel / snowflake / meek) and psiphon ride along as bundled transports.
 - **Live speeds and sessions.** The Home screen shows download / upload rates, cumulative
   volume and live TCP / UDP session counts, straight off the zeptun engine's counters.
+- **Pixel-style Material You UI.** Google-blue Material 3 palette, day/night surfaces that
+  follow the system theme, a large circular power control and filter chips.
+- **Home-screen widget.** A 4×2 Glance widget mirrors the live status and speeds and
+  toggles the tunnel with one tap — no app launch needed.
+- **Quick-settings tile.** A panel tile toggles the tunnel from anywhere; its subtitle
+  always shows the live state, in sync with the app and the widget.
 - **Bilingual UI.** فارسی (RTL) and English, switchable in-app.
 - **You can watch it think.** The core's native log stream is captured and shown in the
   Logs tab — scans, handshakes, reconnects, stats — the same output the CLI prints.
@@ -160,6 +170,11 @@ psiphon به‌صورت توکار.
 - **حالت پراکسی:** سوکت‌های خودتان را به `socks5://127.0.0.1:1819` وصل کنید.
 - **سرعت و نشست‌های زنده:** صفحه‌ی اصلی، سرعت دانلود/آپلود، حجم مصرفی و تعداد
   نشست‌های فعال TCP/UDP را از شمارنده‌های خودِ موتور نشان می‌دهد.
+- **ظاهر پیکسل (Material You):** پالت آبی گوگل با حالت روز/شب خودکار، دکمه‌ی برق
+  دایره‌ای بزرگ و چیپ‌های متریال ۳.
+- **ویجت صفحه‌ی خانه:** ویجت ۴×۲ با وضعیت و سرعت زنده؛ یک لمس روی دکمه = روشن/خاموش،
+  بدون باز کردن اپ.
+- **کاشی پنل سریع:** خاموش/روشن از خود پنل تنظیمات سریع، همگام با اپ و ویجت.
 - **رابط فارسی و انگلیسی** با راست‌چین کامل.
 - **گزارش زنده‌ی هسته:** هرچه هسته، arti و ترنسپورت‌ها می‌نویسند، در تب «گزارش»
   می‌بینید.

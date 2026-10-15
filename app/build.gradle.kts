@@ -12,8 +12,8 @@ android {
         applicationId = "studio.cluvex.aether"
         minSdk = 24
         targetSdk = 35
-        versionCode = (System.getenv("AETHER_VERSION_CODE")?.toIntOrNull() ?: 2)
-        versionName = (System.getenv("AETHER_VERSION_NAME") ?: "1.1.0")
+        versionCode = (System.getenv("AETHER_VERSION_CODE")?.toIntOrNull() ?: 3)
+        versionName = (System.getenv("AETHER_VERSION_NAME") ?: "2.0.0")
 
         // One APK, one ABI: 64-bit phones.
         ndk {
@@ -100,5 +100,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.service)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.glance)
+    implementation(libs.androidx.glance.appwidget)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

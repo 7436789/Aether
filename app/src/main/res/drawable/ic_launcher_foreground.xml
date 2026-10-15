@@ -7,20 +7,20 @@
     <!-- Ether waves: three concentric ripples and a bright core. -->
     <path
         android:pathData="M49,54 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0"
-        android:fillColor="#7FE7F4" />
+        android:fillColor="#FFFFFF" />
     <path
         android:pathData="M42,54 a12,12 0 1,0 24,0 a12,12 0 1,0 -24,0"
-        android:strokeColor="#7FE7F4"
+        android:strokeColor="#FFFFFF"
         android:strokeWidth="3.2"
         android:fillColor="#00000000" />
     <path
         android:pathData="M35,54 a19,19 0 1,0 38,0 a19,19 0 1,0 -38,0"
-        android:strokeColor="#38BDF8"
+        android:strokeColor="#D3E3FD"
         android:strokeWidth="2.6"
         android:fillColor="#00000000" />
     <path
         android:pathData="M28,54 a26,26 0 1,0 52,0 a26,26 0 1,0 -52,0"
-        android:strokeColor="#38BDF8"
+        android:strokeColor="#D3E3FD"
         android:strokeWidth="2"
         android:fillColor="#00000000" />
 </vector>
