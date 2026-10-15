@@ -40,9 +40,10 @@ installing an update built from a different run.
 
 ## What this app does
 
-- **Real VPN mode.** A `VpnService` TUN front end ([hev-socks5-tunnel](https://github.com/heiher/hev-socks5-tunnel))
-  routes the whole device through the tunnel — apps, DNS, everything — while the app's own
-  sockets stay outside so the tunnel never loops back onto itself.
+- **Real VPN mode.** A `VpnService` TUN front end ([zeptun](https://github.com/Noisemux/zeptun),
+  a tun2socks engine written in Zig) routes the whole device through the tunnel — apps, DNS,
+  everything — while the app's own sockets stay outside so the tunnel never loops back onto
+  itself. Every engine `.so` is 16 KB aligned, as Android 15+ requires.
 - **Proxy mode.** Prefer wiring things yourself? The core serves its SOCKS5 endpoint on
   `127.0.0.1:1819` either way; the Home screen shows it live.
 - **All the transports.** MASQUE over HTTP/3 or HTTP/2, classic WireGuard, `gool`
@@ -61,7 +62,7 @@ installing an update built from a different run.
 ```
 ┌──────────────────────────── your phone ────────────────────────────┐
 │                                                                    │
-│  apps ──► TUN (VpnService) ──► hev-socks5-tunnel ──┐               │
+│  apps ──► TUN (VpnService) ──► zeptun (Zig) ──────┐               │
 │                                                    │ 127.0.0.1:1819│
 │  your browser ──────────────────── SOCKS5 ─────────┘               │
 │                                                        │           │
@@ -84,7 +85,7 @@ routing is standard Android plumbing, not hacks.
 CI does the heavy lifting: any push to `main` (or a `v*` tag) runs
 [`android.yml`](../.github/workflows/android.yml), which cross-compiles the core with
 `cargo-ndk` + the Android NDK exactly the way upstream's release pipeline does, builds
-tun2socks and the Go transports, then assembles and signs both APK shapes.
+zeptun with Zig 0.16.0 and the Go transports, then assembles and signs both APK shapes.
 
 To do it by hand:
 
@@ -92,19 +93,19 @@ To do it by hand:
 git clone https://github.com/7436789/Aether.git
 cd Aether
 
-# 1) native libs per ABI (needs Rust ≥1.98, NDK r26d, Go 1.22, CMake)
+# 1) native libs per ABI (needs Rust ≥1.98, NDK r26d, Go 1.22, Zig 0.16.0, CMake)
 bash pt-build.sh linux arm64 "$PWD/out-pt"
 bash psiphon-build.sh linux arm64 "$PWD/out-pt"
 cd aether
 export BORING_BSSL_RUST_CPPLIB_aarch64_linux_android=static:-bundle=c++
 cargo ndk -t arm64-v8a --platform 24 build --release --features tor --lib
-# …and hev-socks5-tunnel via ndk-build; see android.yml for the exact steps
+# …and zeptun via `sh scripts/build_android.sh`; see android.yml for the exact steps
 
 # 2) the app (needs JDK 17 + Android SDK)
 cd ../..
 mkdir -p app/src/main/jniLibs/arm64-v8a
 cp aether/target/aarch64-linux-android/release/libaether.so app/src/main/jniLibs/arm64-v8a/
-# + libhev-socks5-tunnel.so, liblyrebird.so, libpsiphon-tunnel-core.so
+# + libzeptun-jni.so, liblyrebird.so, libpsiphon-tunnel-core.so
 ./gradlew assembleRelease
 ```
 
@@ -117,7 +118,7 @@ manager once; the APK isn't on Play Store.
 32-bit devices, `universal`.
 
 **Battery / always-on?** — The core is quiet when idle and the TUN worker is a single
-small native thread; it's comparable to other local-VPN apps.
+small native thread with a bounded packet pool; it's comparable to other local-VPN apps.
 
 **Can I keep using my own proxy apps?** — Yes. Turn TUN mode off in Settings and dial
 `socks5://127.0.0.1:1819` from whatever you like.
@@ -135,8 +136,9 @@ with your key.
 وایرگارد، gool و mim، همراه با پروفایل‌های اسکن و مخفی‌سازی، و پشتیبانی Tor و
 psiphon به‌صورت توکار.
 
-- **حالت VPN کامل:** رابط TUN با hev-socks5-tunnel کل دستگاه را از تانل رد می‌کند؛
-  سوکت‌های خودِ اپ بیرون از VPN می‌مانند تا حلقه‌ی مسیریابی شکل نگیرد.
+- **حالت VPN کامل:** رابط TUN با zeptun (موتور tun2socks به زبان Zig) کل دستگاه را
+  از تانل رد می‌کند؛ سوکت‌های خودِ اپ بیرون از VPN می‌مانند تا حلقه‌ی مسیریابی شکل
+  نگیرد.
 - **حالت پراکسی:** سوکت‌های خودتان را به `socks5://127.0.0.1:1819` وصل کنید.
 - **رابط فارسی و انگلیسی** با راست‌چین کامل.
 - **گزارش زنده‌ی هسته:** هرچه هسته، arti و ترنسپورت‌ها می‌نویسند، در تب «گزارش»
@@ -146,7 +148,7 @@ psiphon به‌صورت توکار.
 دانلود از [انتشارها](https://github.com/7436789/Aether/releases/latest):
 گوشی‌های ۶۴ بیتی `arm64-v8a`، برای بقیه نسخه‌ی `universal`.
 برای بیلد دستی هم `android.yml` دقیقاً همان مسیر آپ‌استریم (cargo-ndk + NDK r26d +
-ترنسپورت‌های Go) را طی می‌کند.
+zeptun با Zig و ترنسپورت‌های Go) را طی می‌کند.
 
 ---
 
@@ -156,7 +158,8 @@ psiphon به‌صورت توکار.
   **CluvexStudio** — this project is a community front end and is **not** an official
   CluvexStudio product. Aether's name and logo belong to their owners; the art in this
   repository is original.
-- [hev-socks5-tunnel](https://github.com/heiher/hev-socks5-tunnel) by hev — TUN → SOCKS5.
+- [zeptun](https://github.com/Noisemux/zeptun) by Noisemux (MIT) — TUN → SOCKS5,
+  with warm SOCKS5 pooling, full-cone UDP NAT and ICMP forwarding.
 - lyrebird (Tor pluggable transports) and psiphon-tunnel-core, built by the upstream
   scripts.
 

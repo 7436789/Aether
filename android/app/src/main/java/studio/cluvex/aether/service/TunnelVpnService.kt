@@ -5,16 +5,18 @@ import android.content.Intent
 import android.net.VpnService
 import android.os.ParcelFileDescriptor
 import android.util.Log
-import java.io.File
+import dev.zeptun.Zeptun
 
 /**
  * Raises a TUN interface through [VpnService] and hands its descriptor to
- * hev-socks5-tunnel, which turns device traffic into SOCKS5 sessions on
- * the local Aether proxy.
+ * zeptun, the tun2socks engine written in Zig, which turns device traffic
+ * into SOCKS5 sessions on the local Aether proxy.
  *
  * The app itself is excluded from the tunnel (`addDisallowedApplication`)
  * so the core's own sockets — and the Go transport processes it spawns —
  * always dial the internet directly and never loop back through the TUN.
+ * On top of that the engine calls [VpnService.protect] for every upstream
+ * socket it opens.
  */
 class TunnelVpnService : VpnService() {
 
@@ -88,35 +90,39 @@ class TunnelVpnService : VpnService() {
         }
         tun = descriptor
 
-        val config = File(filesDir, "hev-tunnel.yml")
-        config.writeText(
-            """
-            tunnel:
-              name: tun0
-              mtu: $MTU
-              ipv4: $ADDRESS_V4
-            ${if (ipv6) "  ipv6: '$ADDRESS_V6'" else ""}
-            socks5:
-              address: 127.0.0.1
-              port: $port
-              udp: 'udp'
-            misc:
-              log-level: warn
-            """.trimIndent().replace("\n\n", "\n"),
-        )
+        // The mobile preset: one queue, the userspace stack, 64 KB TCP
+        // windows and a bounded packet pool. Addresses and routes belong
+        // to VpnService.Builder, so the engine is told nothing about
+        // them and never touches the routing table. DNS to 1.1.1.1 is
+        // plain UDP through the SOCKS5 relay, exactly as with the old
+        // engine, so the core resolves it far side.
+        val config = """
+            preset = "mobile"
+            log_level = "warn"
 
-        val ok = runCatching {
-            TunHolder.ensure().TProxyStartService(config.absolutePath, descriptor.fd)
-        }.getOrDefault(false)
+            [tun]
+            mtu = $MTU
 
-        if (!ok) {
-            Log.e(TAG, "hev-socks5-tunnel refused to start")
-            studio.cluvex.aether.core.AetherRuntime.appendLog(":: tun2socks failed to start ::")
+            [handler]
+            kind = "socks5"
+
+            [handler.socks5]
+            server = "127.0.0.1:$port"
+            udp_mode = "udp"
+        """.trimIndent()
+
+        val rc = runCatching {
+            Zeptun.nativeStart(this, descriptor.fd, config)
+        }.getOrDefault(-1)
+
+        if (rc != 0) {
+            Log.e(TAG, "zeptun refused to start: rc=$rc")
+            studio.cluvex.aether.core.AetherRuntime.appendLog(":: tun2socks failed to start (rc=$rc) ::")
             teardown()
             stopSelf()
             return START_NOT_STICKY
         }
-        Log.i(TAG, "tun front end up on fd ${descriptor.fd}")
+        Log.i(TAG, "zeptun ${Zeptun.nativeVersion()} up on fd ${descriptor.fd}")
         return START_STICKY
     }
 
@@ -126,7 +132,7 @@ class TunnelVpnService : VpnService() {
     }
 
     private fun teardown() {
-        runCatching { TunHolder.ensure().TProxyStopService() }
+        runCatching { Zeptun.nativeStop() }
         runCatching { tun?.close() }
         tun = null
     }

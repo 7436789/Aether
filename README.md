@@ -67,7 +67,7 @@ To update later, run `./aether.sh update`. To remove it, run `./aether.sh uninst
 ### Android app (GUI)
 
 A native Kotlin/Jetpack-Compose front end for the core lives in [`android/`](android/README.md) —
-one tap and the whole device routes through the tunnel (VpnService TUN + hev-socks5-tunnel),
+one tap and the whole device routes through the tunnel (VpnService TUN + [zeptun](https://github.com/Noisemux/zeptun)),
 with MASQUE / WireGuard / gool / mim switching, the tor feature, live core logs, and a
 فارسی + English interface. CI builds two installable APKs on every change:
 

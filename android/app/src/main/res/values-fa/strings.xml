@@ -83,7 +83,7 @@
     <string name="about_upstream">پروژه اصلی</string>
     <string name="about_license">مجوز</string>
     <string name="about_license_note">AGPL-3.0 — هسته، ترنسپورت‌ها و همین رابط، همگی نرم‌افزار آزادند و سورس کامل با بیلد عرضه می‌شود.</string>
-    <string name="about_transports">قدرت‌گرفته از هسته Aether (MASQUE، WireGuard، gool، mim)، hev-socks5-tunnel، lyrebird و psiphon-tunnel-core.</string>
+    <string name="about_transports">قدرت‌گرفته از هسته Aether (MASQUE، WireGuard، gool، mim)، zeptun، lyrebird و psiphon-tunnel-core.</string>
     <string name="about_warning">با مسئولیت و مطابق قوانین محل زندگی‌تان استفاده کنید.</string>
 
     <!-- Notification -->

@@ -14,7 +14,7 @@ env:
 jobs:
   # ------------------------------------------------------------------
   # Native leg: the Rust core (libaether.so, built with the tor feature),
-  # hev-socks5-tunnel (tun2socks) and the Go pluggable transports,
+  # zeptun (tun2socks engine in Zig) and the Go pluggable transports,
   # cross-compiled per ABI exactly the way the release pipeline does it.
   # ------------------------------------------------------------------
   core:
@@ -78,17 +78,34 @@ jobs:
           bash pt-build.sh linux ${{ matrix.goarch }} "$RUNNER_TEMP/out-pt" "${{ matrix.goarm }}"
           bash psiphon-build.sh linux ${{ matrix.goarch }} "$RUNNER_TEMP/out-pt" "${{ matrix.goarm }}"
 
-      - name: Build hev-socks5-tunnel (tun2socks)
+      - name: Install Zig 0.16.0
+        run: |
+          curl -fsSL "https://ziglang.org/download/0.16.0/zig-x86_64-linux-0.16.0.tar.xz" \
+            -o "$RUNNER_TEMP/zig.tar.xz"
+          tar -xf "$RUNNER_TEMP/zig.tar.xz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/zig-x86_64-linux-0.16.0" >> "$GITHUB_PATH"
+
+      - name: Build zeptun (tun2socks engine)
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
           ANDROID_NDK_ROOT: ${{ steps.ndk.outputs.ndk-path }}
+          ZEPTUN_COMMIT: 3fd354d4a0993b8ea39ae34333a66a45c3f16a37
         run: |
-          git clone --recursive --depth 1 https://github.com/heiher/hev-socks5-tunnel.git hev/jni
-          cd hev
-          "${ANDROID_NDK_HOME}/ndk-build" -j"$(nproc)" \
-            APP_ABI=${{ matrix.abi }} APP_PLATFORM=android-24 NDK_PROJECT_PATH=. \
-            APP_BUILD_SCRIPT=jni/Android.mk NDK_APPLICATION_MK=jni/Application.mk
-          test -f "libs/${{ matrix.abi }}/libhev-socks5-tunnel.so"
+          git clone --quiet --depth 50 https://github.com/Noisemux/zeptun.git zeptun
+          git -C zeptun checkout --quiet "$ZEPTUN_COMMIT" || \
+            echo "zeptun: pinned commit is gone, using HEAD" 1>&2
+          cd zeptun
+          ABIS="${{ matrix.abi }}" sh scripts/build_android.sh
+          lib="zig-out/android/jniLibs/${{ matrix.abi }}/libzeptun-jni.so"
+          test -f "$lib"
+          # The engine is statically linked into the JNI bridge: no extra
+          # .so, no libc++_shared, 16 KB aligned load segments.
+          needed=$(readelf -d "$lib" | sed -n 's/.*(NEEDED).*\[\(.*\)\]/\1/p')
+          echo "[zeptun ${{ matrix.abi }}] NEEDED: $needed"
+          if grep -qx 'libc++_shared.so' <<<"$needed"; then
+            echo "ERROR: libzeptun-jni.so needs libc++_shared.so"; exit 1
+          fi
+          ls -la "zig-out/android/jniLibs/${{ matrix.abi }}/"
 
       - name: Build the Rust core (libaether.so)
         working-directory: aether
@@ -112,7 +129,7 @@ jobs:
           out="stage/${{ matrix.abi }}"
           mkdir -p "$out"
           cp "aether/target/${{ matrix.target }}/release/libaether.so" "$out/"
-          cp "hev/libs/${{ matrix.abi }}/libhev-socks5-tunnel.so" "$out/"
+          cp "zeptun/zig-out/android/jniLibs/${{ matrix.abi }}/libzeptun-jni.so" "$out/"
           # Go binaries ride as lib*.so so Android extracts them per ABI
           # with the executable bit already set.
           cp "$RUNNER_TEMP/out-pt/lyrebird" "$out/liblyrebird.so"

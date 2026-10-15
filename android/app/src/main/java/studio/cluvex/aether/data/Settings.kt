@@ -73,7 +73,7 @@ data class AetherSettings(
     val scanMode: ScanMode = ScanMode.BALANCED,
     val noize: Noize = Noize.FIREWALL,
     val ipMode: IpMode = IpMode.V4,
-    /** Route the whole device through a TUN front end (hev-socks5-tunnel). */
+    /** Route the whole device through a TUN front end (zeptun). */
     val vpnMode: Boolean = true,
     /** Local SOCKS5 listen port of the core. */
     val socksPort: Int = 1819,

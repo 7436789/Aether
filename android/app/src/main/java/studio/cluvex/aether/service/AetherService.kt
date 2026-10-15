@@ -12,7 +12,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
-import hev.htproxy.TProxyService
+import dev.zeptun.Zeptun
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -166,10 +166,11 @@ class AetherService : LifecycleService() {
             loops += launch(Dispatchers.Default) {
                 while (isActive && controller != null) {
                     if (TunHolder.isRunning()) {
-                        val stats = runCatching { TunHolder.stats() }.getOrNull()
-                        if (stats != null && stats.size == 4) {
-                            // [tx_packets, tx_bytes, rx_packets, rx_bytes]
-                            AetherRuntime.reportThroughput(rx = stats[3], tx = stats[1])
+                        val counters = TunHolder.throughput()
+                        if (counters != null) {
+                            // engine tx = written into the TUN = downloads,
+                            // engine rx = read out of the TUN = uploads
+                            AetherRuntime.reportThroughput(rx = counters.first, tx = counters.second)
                         }
                     }
                     delay(2000)
@@ -277,16 +278,17 @@ class AetherService : LifecycleService() {
     }
 }
 
-/** Single tun worker; the hev library is process-global anyway. */
+/** Single tun worker; the zeptun engine is process-global anyway. */
 internal object TunHolder {
-    private var service: TProxyService? = null
 
-    @Synchronized
-    fun ensure(): TProxyService = service ?: TProxyService().also { service = it }
+    /** The engine answers counters while it is up, -1 once it is gone. */
+    fun isRunning(): Boolean =
+        runCatching { Zeptun.nativeCounter(Zeptun.STAT_RX_PACKETS) >= 0L }.getOrDefault(false)
 
-    @Synchronized
-    fun isRunning(): Boolean = runCatching { ensure().TProxyIsRunning() }.getOrDefault(false)
-
-    @Synchronized
-    fun stats(): LongArray = ensure().TProxyGetStats()
+    /** [downloads, uploads] in bytes, read from the live counter snapshot. */
+    fun throughput(): Pair<Long, Long>? {
+        val down = runCatching { Zeptun.nativeCounter(Zeptun.STAT_TX_BYTES) }.getOrDefault(-1L)
+        val up = runCatching { Zeptun.nativeCounter(Zeptun.STAT_RX_BYTES) }.getOrDefault(-1L)
+        return if (down >= 0 && up >= 0) down to up else null
+    }
 }

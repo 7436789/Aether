@@ -83,7 +83,7 @@
     <string name="about_upstream">Upstream project</string>
     <string name="about_license">License</string>
     <string name="about_license_note">AGPL-3.0 — the core, the transports and this UI are free software. Source for everything ships with the build.</string>
-    <string name="about_transports">Powered by the Aether core (MASQUE, WireGuard, gool, mim), hev-socks5-tunnel, lyrebird and psiphon-tunnel-core.</string>
+    <string name="about_transports">Powered by the Aether core (MASQUE, WireGuard, gool, mim), zeptun, lyrebird and psiphon-tunnel-core.</string>
     <string name="about_warning">Use responsibly and in accordance with the laws of your jurisdiction.</string>
 
     <!-- Notification -->
